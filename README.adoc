@@ -43,3 +43,49 @@ cd backend
 === Cloud Providers
 
 The next profiles are provided: `-Pazure`, `-Paws`, `-Pgcp` and `-Plocal`, this just sets an environment variable to identify the cluster.
+
+=== Setting up Skupper
+
+Make sure you have a least the `backend` project deployed on 2 different clusters. The `frontend` project can be deployed to just one cluster.
+
+Here, we will make the assumption that we have it deployed in a local cluster *local* and a public cluster *public*.
+
+Make sure to have 2 terminals with separate sessions logged into each of your cluster with the correct namespace context (but within the same folder).
+
+==== Install the Skupper CLI 
+
+Follow the instructions provided https://skupper.io/start/index.html#step-1-install-the-skupper-command-line-tool-in-your-environment[here].
+
+==== Skupper setup
+
+. In your *public* terminal session : 
+
+```
+skupper init --id public
+skupper connection-token private-to-public.yaml
+```
+
+. In your *local* terminal session : 
+
+```
+skupper init --id private
+skupper connect private-to-public.yaml
+```
+
+==== Annotate the services to join to the Virtual Application Network
+
+. In the terminal for the *local* cluster, annotate the hybrid-cloud-backend service:
+
+```
+kubectl annotate service hybrid-cloud-backend skupper.io/proxy=http
+```
+
+. In the terminal for the *public* cluster, annotate the hybrid-cloud-backend service:
+
+```
+kubectl annotate service hybrid-cloud-backend skupper.io/proxy=http
+```
+
+Both services are now connected, if you scale one to 0 or it gets overloaded it will transparently load-balance to the other cluster.
+
+
