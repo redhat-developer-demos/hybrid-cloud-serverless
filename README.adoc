@@ -18,6 +18,7 @@ Deploy the frontend to your "main" cluster:
 [source, shell-session]
 ----
 kubectl apply -f frontend.yml
+oc expose service hybrid-cloud-frontend
 ----
 
 In your "main" cluster, init `skupper` and create the connection-token:
