@@ -7,6 +7,8 @@ image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/frontend/
 
 == TL;DR
 
+NOTE: If you are using `minikube` you also need to run `minikube tunnel` in a separate terminal. More information can be found https://skupper.io/start/minikube.html[here]. 
+
 Deploy the backend in all your clusters:
 
 [source, shell-session]
