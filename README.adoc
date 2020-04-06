@@ -1,5 +1,7 @@
 = Hybrid Cloud
 
+image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/backend-action/badge.svg[]
+
 == TL;DR
 
 Deploy the backend in all your clusters:
