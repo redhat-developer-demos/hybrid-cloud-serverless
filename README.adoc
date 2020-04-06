@@ -1,6 +1,7 @@
 = Hybrid Cloud
 
-image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/backend-action/badge.svg[]
+image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/backend/badge.svg[]
+image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/frontend/badge.svg[]
 
 == TL;DR
 
