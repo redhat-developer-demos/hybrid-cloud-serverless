@@ -9,7 +9,7 @@ Deploy the backend in all your clusters:
 
 [source, shell-session]
 ----
-kubectl apply -f backend.yml
+kubectl apply -f backend-{azr|aws|gcp|minikube}.yml
 kubectl annotate service hybrid-cloud-backend skupper.io/proxy=http
 ----
 
