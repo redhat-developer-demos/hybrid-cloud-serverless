@@ -22,6 +22,14 @@ public class Request {
         return reverse;
     }
 
+    public void setReverse(boolean reverse) {
+        this.reverse = reverse;
+    }
+
+    public void setUppercase(boolean uppercase) {
+        this.uppercase = uppercase;
+    }
+
     @Override
     public String toString() {
         return String.format("Request{text=%s, uppercase=%s, reverse=%s}",

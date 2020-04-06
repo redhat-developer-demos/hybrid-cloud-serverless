@@ -2,6 +2,7 @@ package io.openshift.booster.messaging;
 
 import java.util.UUID;
 
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -10,6 +11,8 @@ import javax.ws.rs.core.MediaType;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 @Path("/api")
+@Produces(MediaType.APPLICATION_JSON)
+@Consumes(MediaType.APPLICATION_JSON)
 public class WorkerResource {
 
     private static final String ID = "worker-quarkus-" + UUID.randomUUID()
@@ -20,8 +23,8 @@ public class WorkerResource {
 
     @POST
     @Path("/process")
-    @Produces(MediaType.APPLICATION_JSON)
     public Response process(Message message) {
+        System.out.println(message);
         Response response = new Response(message.getRequestId(), ID, cloudId, process(message.getRequest()));
         return response;
     }

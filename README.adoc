@@ -72,13 +72,13 @@ Service is already pushed in quay.io, so you can skip the push part:
 [source, shell-session]
 ----
 cd backend
-./mvnw clean package -DskipTests -Pazure -Dquarkus.kubernetes.deploy=true -Dquarkus.container-image.build=false -Dquarkus.container-image.push=false
+./mvnw clean package -DskipTests -Pazr -Dquarkus.kubernetes.deploy=true -Dquarkus.container-image.build=false -Dquarkus.container-image.push=false
 ----
 
 
 === Cloud Providers
 
-The next profiles are provided: `-Pazure`, `-Paws`, `-Pgcp` and `-Plocal`, this just sets an environment variable to identify the cluster.
+The next profiles are provided: `-Pazr`, `-Paws`, `-Pgcp` and `-Plocal`, this just sets an environment variable to identify the cluster.
 
 === Setting up Skupper
 

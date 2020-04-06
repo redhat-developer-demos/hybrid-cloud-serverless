@@ -28,4 +28,10 @@ public class Message {
     public void setRequestId(String requestId) {
         this.requestId = requestId;
     }
+
+    @Override
+    public String toString() {
+        return "Message [request=" + request + ", requestId=" + requestId + "]";
+    }
+
 }
