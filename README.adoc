@@ -1,5 +1,37 @@
 = Hybrid Cloud
 
+== TL;DR
+
+Deploy the backend in all your clusters:
+
+[source, shell-session]
+----
+kubectl apply -f backend.yml
+----
+
+Deploy the frontend to your "main" cluster:
+
+[source, shell-session]
+----
+kubectl apply -f frontend.yml
+----
+
+In your "main" cluster, init `skupper` and create the connection-token:
+
+[source, shell-session]
+----
+skupper init
+skupper connection-token token.yaml
+----
+
+In all the other cluster, use the connection-token created in the previous step:
+
+[source, shell-session]
+----
+skupper init
+skupper connect token.yaml
+----
+
 == Services
 
 === Backend
