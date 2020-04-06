@@ -18,5 +18,7 @@ jobs:
       uses: actions/setup-java@v1.3.0
       with:
         java-version: 11
+    - name: Checkout project
+      uses: actions/checkout@v2
     - name: Maven Build
       run: ls -l
