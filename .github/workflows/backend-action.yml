@@ -19,4 +19,4 @@ jobs:
       with:
         java-version: 11
     - name: Maven Build
-      run: ./mvnw package
+      run: ls -l
