@@ -3,6 +3,8 @@
 image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/backend/badge.svg[]
 image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/frontend/badge.svg[]
 
+*Tested with skupper 0.1.0*
+
 == TL;DR
 
 Deploy the backend in all your clusters:
