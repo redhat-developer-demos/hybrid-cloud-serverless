@@ -7,9 +7,9 @@ image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/frontend/
 
 == TL;DR
 
-NOTE: If you are using `minikube` you also need to run `minikube tunnel` in a separate terminal. More information can be found https://skupper.io/start/minikube.html[here]. 
+IMPORTANT: If you are using `minikube` as one cluster, run `minikube tunnel` in a new terminal:
 
-Deploy the backend in all your clusters:
+Deploy the backend to *all* your clusters:
 
 [source, shell-session]
 ----
@@ -17,29 +17,48 @@ kubectl apply -f backend-{azr|aws|gcp|minikube}.yml
 kubectl annotate service hybrid-cloud-backend skupper.io/proxy=http
 ----
 
-Deploy the frontend to your "main" cluster:
+Deploy the frontend to your *main* cluster:
 
 [source, shell-session]
 ----
 kubectl apply -f frontend.yml
-oc expose service hybrid-cloud-frontend
 ----
 
-In your "main" cluster, init `skupper` and create the connection-token:
+If frontend is not deployed in `minikube` you need to expose the created ingress endpoint.
+In case of OpenShift run: `oc expose service hybrid-cloud-frontend`.
+
+In your *main* cluster, init `skupper` and create the `connection-token`:
 
 [source, shell-session]
 ----
 skupper init
+skupper status
+----
+
+See the status of the skupper pods.
+It takes a bit of time until thepods are running:
+
+[source, shell-session]
+----
+kubectl get pods -w
+----
+
+Finally create a token:
+
+----
 skupper connection-token token.yaml
 ----
 
-In all the other cluster, use the connection-token created in the previous step:
+In *all the other clusters*, use the connection token created in the previous step:
 
 [source, shell-session]
 ----
 skupper init
 skupper connect token.yaml
 ----
+
+Everything is connected and ready to be used.
+This has been the short-version to get started, continue reading if you want to learn how to build the Docker images, deply them , etc.
 
 == Services
 
@@ -58,11 +77,11 @@ Service is already pushed in quay.io, so you can skip the push part:
 [source, shell-session]
 ----
 cd backend
+
 ./mvnw clean package -DskipTests -Pazure -Dquarkus.kubernetes.deploy=true -Dquarkus.container-image.build=false -Dquarkus.container-image.push=false
 ---- 
 
 === Frontend
-
 
 If you want to build, push and deploy the service:
 
@@ -77,9 +96,9 @@ Service is already pushed in quay.io, so you can skip the push part:
 [source, shell-session]
 ----
 cd backend
+
 ./mvnw clean package -DskipTests -Pazr -Dquarkus.kubernetes.deploy=true -Dquarkus.container-image.build=false -Dquarkus.container-image.push=false
 ----
-
 
 === Cloud Providers
 
