@@ -30,7 +30,7 @@ spec:
   selector:
     app.kubernetes.io/name: "hybrid-cloud-frontend"
     app.kubernetes.io/version: "1.0.0"
-  type: "ClusterIP"
+  type: "LoadBalancer"
 ---
 apiVersion: "apps/v1"
 kind: "Deployment"

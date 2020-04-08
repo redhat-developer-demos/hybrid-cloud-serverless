@@ -1,3 +1,4 @@
 target
 *.class
 token.yaml
+.vscode/
