@@ -132,7 +132,7 @@ cd backend
 ./mvnw clean package -DskipTests -Dquarkus.kubernetes.deploy=true -Pazure
 ----
 
-Service is already pushed in quay.io, so you can skip the push part:
+If service is already pushed in quay.io, so you can skip the push part:
 
 [source, shell-session]
 ----
@@ -148,10 +148,10 @@ If you want to build, push and deploy the service:
 [source, shell-session]
 ----
 cd backend
-./mvnw clean package -DskipTests -Dquarkus.kubernetes.deploy=true -Pazure
+./mvnw clean package -DskipTests -Dquarkus.kubernetes.deploy=true -Pazure -Dquarkus.kubernetes.host=<your_public_host>
 ----
 
-Service is already pushed in quay.io, so you can skip the push part:
+If service is already pushed in quay.io, so you can skip the push part:
 
 [source, shell-session]
 ----
