@@ -67,7 +67,7 @@ spec:
               fieldPath: "metadata.namespace"
         - name: "WORKER_CLOUD_ID"
           value: "azr"
-        image: "quay.io/rhdevelopers/hybrid-cloud-backend:1.0.0"
+        image: "quay.io/rhdevelopers/hybrid-cloud-backend-jvm:1.0.0"
         imagePullPolicy: "IfNotPresent"
         name: "hybrid-cloud-backend"
         ports:
