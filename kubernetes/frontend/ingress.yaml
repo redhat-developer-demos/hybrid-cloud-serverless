@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  labels:
+    app: hybrid-cloud-frontend
+  name: hybrid-cloud-frontend
+spec:
+  rules:
+    - http:
+        paths:
+          - backend:
+              serviceName: hybrid-cloud-frontend
+              servicePort: 8080
+            path: "/"

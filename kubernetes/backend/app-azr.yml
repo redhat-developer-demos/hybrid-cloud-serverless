@@ -1,0 +1,38 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hybrid-cloud-backend
+    cloud: Azure
+  name: hybrid-cloud-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hybrid-cloud-backend
+  template:
+    metadata:
+      labels:
+        app: hybrid-cloud-backend
+    spec:
+      containers:
+        - env:
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: WORKER_CLOUD_ID
+              value: azr
+          image: quay.io/rhdevelopers/hybrid-cloud-backend:1.0.0
+          imagePullPolicy: IfNotPresent
+          name: backend
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "500Mi"
+      serviceAccount: hybrid-cloud-backend
