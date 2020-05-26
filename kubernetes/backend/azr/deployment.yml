@@ -4,7 +4,6 @@ kind: Deployment
 metadata:
   labels:
     app: hybrid-cloud-backend
-    cloud: Azure
   name: hybrid-cloud-backend
 spec:
   replicas: 1

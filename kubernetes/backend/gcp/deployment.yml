@@ -4,7 +4,6 @@ kind: Deployment
 metadata:
   labels:
     app: hybrid-cloud-backend
-    cloud: Amazon
   name: hybrid-cloud-backend
 spec:
   replicas: 1
@@ -23,7 +22,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: WORKER_CLOUD_ID
-              value: aws
+              value: gcp
           image: quay.io/rhdevelopers/hybrid-cloud-backend:1.0.0
           imagePullPolicy: IfNotPresent
           name: backend
