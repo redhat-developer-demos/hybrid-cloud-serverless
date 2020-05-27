@@ -4,14 +4,12 @@ kind: Deployment
 metadata:
   labels:
     app: hybrid-cloud-frontend
-    cloud: Google
   name: hybrid-cloud-frontend
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: hybrid-cloud-frontend
-      app.kubernetes.io/version: "1.0.0"
   template:
     metadata:
       labels:
