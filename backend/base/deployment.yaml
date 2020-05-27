@@ -22,7 +22,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: WORKER_CLOUD_ID
-              value: gcp
+              value: localhost
           image: quay.io/rhdevelopers/hybrid-cloud-backend:1.0.0
           imagePullPolicy: IfNotPresent
           name: backend
