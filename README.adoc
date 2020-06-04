@@ -27,6 +27,12 @@ Deploy the backend to *all* your clusters:
 [source, shell-session]
 ----
 kubectl apply -f backend-{azr|aws|gcp|minikube}.yml
+----
+
+Then you need to annotate the backend service so it is skupper-aware.
+
+[source, shell-session]
+----
 kubectl annotate service hybrid-cloud-backend skupper.io/proxy=http
 ----
 
