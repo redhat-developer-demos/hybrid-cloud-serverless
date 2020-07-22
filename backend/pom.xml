@@ -160,6 +160,17 @@
       </properties>
     </profile>
     <profile>
+      <id>ibmcloud</id>
+      <activation>
+        <property>
+          <name>ibmcloud</name>
+        </property>
+      </activation>
+      <properties>
+        <quarkus.kubernetes.env-vars.worker-cloud-id.value>ibmcloud</quarkus.kubernetes.env-vars.worker-cloud-id.value>
+      </properties>
+    </profile>
+    <profile>
       <id>local</id>
       <activation>
         <property>
