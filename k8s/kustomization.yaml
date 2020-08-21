@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Adds namespace to all resources.
+namespace: hybrid-demo
+
+# Adds hybrid-demo label to all resources.
+commonLabels:
+  app: hybrid-demo
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: maven-settings
+    behavior: create
+    files:
+      - settings.xml
+
+resources:
+  - core/namespace.yaml
+  - rbac/skupper-site-controller.yaml
+  - rbac/kn-deployer.yaml
+  - core/pvcs.yaml
+  - core/nexus.yaml
+  - skupper/controller.yaml
+  - pipelines/ksvc-deploy.yaml

@@ -1,0 +1,122 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: hybrid-cloud-demo-deploy
+  labels:
+    pipeline.openshift.io/runtime: java
+    pipeline.openshift.io/type: knative
+spec:
+  description: >-
+    The Pipline to build and deploy the Hybrid Cloud Demo Java App https://github.com/redhat-developer-demos/hybrid-cloud as Knative Service.
+  params:
+    - name: GITHUB_REPO_URL
+      description: >-
+        The GitHub Repo of the Java Application
+      default: https://github.com/redhat-developer-demos/hybrid-cloud
+    - name: GITHUB_REPO_REVISION
+      description: >-
+        The GitHub revision to use
+      default: knative
+    - name: IMAGE_NAME
+      description: >-
+        The fully qualified image name e.g example.com/tekton-tutorial/helloworld
+      default: image-registry.openshift-image-registry.svc:5000/rhdevelopers/hybrid-demo
+    - name: SERVICE_TIER
+      description: >-
+        The service tier for the application allowed values "backend" or "frontend"
+    - name: APP_NAME
+      description: >-
+        The Knative Service name
+    - name: KN_CONCURRENCY_LIMIT
+      description: >-
+        The maximum number of concurrent requests to allow per service pod
+      default: 10
+    - name: WORKER_CLOUD_ID
+      description: >-
+        The underlying worker cloud provider used for identifying the cloud
+  workspaces:
+    - name: source
+    - name: maven-settings
+  tasks:
+    - name: clone-sources
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.GITHUB_REPO_URL)
+        - name: revision
+          value: $(params.GITHUB_REPO_REVISION)
+        # just to do a fresh clone, as we already have the directory cloned
+        # to reuse it we can exlude this step
+        - name: deleteExisting
+          value: "true"
+      workspaces:
+        - name: output
+          workspace: source
+    - name: maven-test
+      taskRef:
+        name: maven
+      runAfter:
+        - clone-sources
+      params:
+        - name: GOALS
+          value: ["-pl", "$(PARAMS.SERVICE_TIER)", "-B", "clean", "test"]
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: source
+    - name: maven-package
+      taskRef:
+        name: maven
+      runAfter:
+        - maven-test
+      params:
+        - name: GOALS
+          value:
+            [
+              "-pl",
+              "$(PARAMS.SERVICE_TIER)",
+              "-B",
+              "-DskipTests",
+              "clean",
+              "package",
+            ]
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: source
+    - name: buildah-build-push
+      taskRef:
+        name: buildah
+      runAfter:
+        - maven-package
+      params:
+        - name: CONTEXT
+          value: "$(PARAMS.SERVICE_TIER)"
+        - name: IMAGE
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)"
+        # since pushing to internal registry we skip TLS verify
+        - name: TLSVERIFY
+          value: "false"
+      workspaces:
+        - name: source
+          workspace: source
+    - name: deploy-kn-service
+      taskRef:
+        name: kn
+      runAfter:
+        - buildah-build-push
+      params:
+        - name: ARGS
+          value:
+            - "service"
+            - "create"
+            - "$(params.APP_NAME)"
+            - "--force"
+            - "--image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)"
+            - "--concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)"
+            - "--env WORKER_CLOUD_ID=$(params.WORKER_CLOUD_ID)"
+            - "--annotation skupper.io/proxy=http"
+            - "--annotation skupper.io/target=$(params.APP_NAME).hybrid-demo"

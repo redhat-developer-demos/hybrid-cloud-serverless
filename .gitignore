@@ -2,3 +2,17 @@ target
 *.class
 token.yaml
 .vscode/
+env/envvars
+env/extravars
+env/extravars.*
+!env/extravars.example
+project/keys
+!project/keys/README.md
+project/.ansible
+out/**
+!out/.gitkeep
+artifacts/**
+!artifacts/.gitkeep
+inventory/**
+!inventory/hostsdocs.old
+.cache
