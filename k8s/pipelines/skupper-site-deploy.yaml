@@ -1,0 +1,75 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: skupper-site-deploy
+spec:
+  description: >-
+    Create Skupper site based on https://github.com/skupperproject/skupper/tree/0.3/cmd/site-controller
+  params:
+    - name: SITE_NAME
+      description: The Skupper VAN Site name
+      default: skupper
+    - name: CLUSTER_LOCAL
+      description: >-
+        Set up skupper to only accept connections from within the local cluster.
+      default: "false"
+    - name: CONSOLE
+      description: >-
+        Enable skupper console.
+      default: "true"
+    - name: CONSOLE_AUTHENTICATION
+      description: >-
+        The authentication method for skupper console, possible values are: openshift or internal or unsecured
+      default: "internal"
+    - name: CONSOLE_USER
+      description: >-
+        The console login user for internal option
+      default: "skupper"
+    - name: CONSOLE_PASSWORD
+      description: >-
+        The console login user password for internal option
+      default: "skupper"
+    - name: EDGE
+      description: >-
+        Set up an edge skupper site.
+      default: "false"
+    - name: ROUTER_CONSOLE
+      description: >-
+        Set up a Dispatch Router console (not recommended).
+      default: "false"
+    - name: SERVICE_CONTROLLER
+      description: >-
+        Run the service controller.
+      default: "true"
+    - name: SERVICE_SYNC
+      description: >-
+        Only relevant if the service controller is running. Determine if the service controller participates in service synchronization.
+      default: "true"
+  tasks:
+    - name: query-cloud-provider
+      taskRef:
+        name: cloud-identifier
+    - name: skupper-site
+      runAfter:
+        - query-cloud-provider
+      taskRef:
+        name: skupper-site
+      params:
+        - name: SITE_NAME
+          value: "$(params.SITE_NAME)-$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)"
+        - name: CLUSTER_LOCAL
+          value: "$(params.CLUSTER_LOCAL)"
+        - name: CONSOLE_AUTHENTICATION
+          value: "$(params.CONSOLE_AUTHENTICATION)"
+        - name: CONSOLE_USER
+          value: "$(params.CONSOLE_USER)"
+        - name: CONSOLE_PASSWORD
+          value: "$(params.CONSOLE_PASSWORD)"
+        - name: EDGE
+          value: "$(params.EDGE)"
+        - name: ROUTER_CONSOLE
+          value: "$(params.SERVICE_CONTROLLER)"
+        - name: SERVICE_CONTROLLER
+          value: "$(params.SERVICE_CONTROLLER)"
+        - name: SERVICE_SYNC
+          value: "$(params.SERVICE_SYNC)"

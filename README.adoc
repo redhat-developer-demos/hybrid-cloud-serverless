@@ -30,7 +30,10 @@ $REPO_HOME provision.sh <pass the kubeconfig file to use>
 ----
 IMPORTANT: You need to run this command once against each Cluster with respective `$KUBECONFIG` file absolute path as argument.
 
-//TODO need to add CLI tools ??
+=== CLI Tools
+
+- https://github.com/tektoncd/cli[Tekton CLI]
+- https://github.com/skupperproject/skupper/tree/0.3/cmd/skupper[Skupper CLI > 0.3.0]
 
 == Deploy Services
 
@@ -49,10 +52,48 @@ Deploy these required resources by running:
 
 [source,bash,attributes]
 ----
-oc apply -k $REPO_HOME/
+oc apply -k $REPO_HOME/k8s/
 ----
 
-IMPORTANT: Wait for nexus to run before deploying backend and front services
+[IMPORTANT]
+====
+- Wait for nexus to run before deploying backend and front services
+- Repeat the above command against all the OpenShift clusters where you are going to deploy the frontend and backend applications
+====
+
+Shift to the *hybrid-demo* project:
+
+[source,bash,attributes]
+----
+oc project hybrd-demo
+----
+
+=== Deploy Skupper
+
+To deploy Skupper Router and Controller, run the following command on each of your OpenShift Clusters:
+
+[source,bash,attributes]
+----
+tkn pipeline start skupper-site-deploy \
+   --serviceaccount skupper-site-controller \
+   --param SITE_NAME=backend \
+   --use-param-defaults \
+   --showlog
+----
+
+Verify if Skupper is up and running before proceeeding to next section, you can verify by:
+
+[source,bash,attributes]
+----
+skupper status
+----
+
+The command should show an output like:
+
+[source,bash,attributes]
+----
+
+----
 
 === Backend 
 
@@ -60,6 +101,11 @@ All clusters where only *backend* service tier will be deployed, run:
 
 [source,bash,attributes]
 ----
+tkn pipeline start hybrid-cloud-demo-deploy \
+   --serviceaccount kn-service-deployer-account \
+   --param APP_NAME=backend \
+   --use-param-defaults \
+   --showlog  
 ----
 
 === Frontend

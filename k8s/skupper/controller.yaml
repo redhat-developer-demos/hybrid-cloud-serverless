@@ -3,6 +3,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: skupper-site-controller
+  labels:
+    app.kubernetes.io/part-of: skupper
 spec:
   replicas: 1
   selector:

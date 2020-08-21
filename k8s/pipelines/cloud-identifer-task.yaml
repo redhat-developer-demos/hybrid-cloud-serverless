@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: cloud-identifier
+spec:
+  description: >-
+    Identifies the Cloud on which OpenShift is deployed
+  results:
+    - name: CLOUD_PROVIDER
+      description: Stores the underlying OpenShift Cloud Provider
+  steps:
+    - name: which-cloud
+      image: quay.io/rhdevelopers/origin-cli-yq-jq
+      script: |
+        #!/usr/bin/env bash
+        cloud_provider=$(oc get -n openshift-kube-apiserver configmap/config -o yaml -o jsonpath="{.data['config\.yaml']}" | jq -r '.apiServerArguments."cloud-provider"[0]')
+        if [ $cloud_provider == "gce" ]
+        then 
+          cloud_provider="gcp"
+        elif [ $cloud_provider == "azure" ]
+        then 
+          cloud_provider="azr"
+        fi 
+        echo "You are using ${cloud_provider^^}"
+        echo "${cloud_provider^^}" | tee $(results.CLOUD_PROVIDER.path)

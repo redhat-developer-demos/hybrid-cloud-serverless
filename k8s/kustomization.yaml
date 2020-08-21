@@ -24,4 +24,7 @@ resources:
   - core/pvcs.yaml
   - core/nexus.yaml
   - skupper/controller.yaml
+  - pipelines/cloud-identifer-task.yaml
+  - pipelines/skupper-site-task.yaml
   - pipelines/ksvc-deploy.yaml
+  - pipelines/skupper-site-deploy.yaml

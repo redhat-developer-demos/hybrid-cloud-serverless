@@ -20,7 +20,7 @@ spec:
     - name: IMAGE_NAME
       description: >-
         The fully qualified image name e.g example.com/tekton-tutorial/helloworld
-      default: image-registry.openshift-image-registry.svc:5000/rhdevelopers/hybrid-demo
+      default: image-registry.openshift-image-registry.svc:5000/hybrid-demo/hybrid-demo
     - name: SERVICE_TIER
       description: >-
         The service tier for the application allowed values "backend" or "frontend"
@@ -30,10 +30,7 @@ spec:
     - name: KN_CONCURRENCY_LIMIT
       description: >-
         The maximum number of concurrent requests to allow per service pod
-      default: 10
-    - name: WORKER_CLOUD_ID
-      description: >-
-        The underlying worker cloud provider used for identifying the cloud
+      default: "10"
   workspaces:
     - name: source
     - name: maven-settings
@@ -103,11 +100,16 @@ spec:
       workspaces:
         - name: source
           workspace: source
+    - name: query-cloud-provider
+      taskRef:
+        name: cloud-identifier
+      runAfter:
+        - buildah-build-push
     - name: deploy-kn-service
       taskRef:
         name: kn
       runAfter:
-        - buildah-build-push
+        - query-cloud-provider
       params:
         - name: ARGS
           value:
@@ -117,6 +119,6 @@ spec:
             - "--force"
             - "--image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)"
             - "--concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)"
-            - "--env WORKER_CLOUD_ID=$(params.WORKER_CLOUD_ID)"
+            - "--env WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)"
             - "--annotation skupper.io/proxy=http"
             - "--annotation skupper.io/target=$(params.APP_NAME).hybrid-demo"
