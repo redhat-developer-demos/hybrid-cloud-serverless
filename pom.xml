@@ -33,5 +33,6 @@
   <modules>
     <module>frontend</module>
     <module>backend</module>
+    <module>prime-generator</module>
   </modules>
 </project>

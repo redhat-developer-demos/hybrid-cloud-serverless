@@ -51,9 +51,28 @@ The demo will be deployed in the namespace `{namespace}`, the namespace need to 
 
 Deploy these required resources by running:
 
+.RBAC
 [source,bash,attributes]
 ----
-oc apply -k $REPO_HOME/k8s/
+oc apply -k $REPO_HOME/k8s/rbac
+----
+
+.Core
+[source,bash,attributes]
+----
+oc apply -k $REPO_HOME/k8s/core
+----
+
+.Pipelines
+[source,bash,attributes]
+----
+oc apply -k $REPO_HOME/k8s/pipelines
+----
+
+.Skupper
+[source,bash,attributes]
+----
+oc apply -k $REPO_HOME/k8s/skupper
 ----
 
 [IMPORTANT]
@@ -61,6 +80,14 @@ oc apply -k $REPO_HOME/k8s/
 - Wait for nexus to run before deploying backend and front services
 - Repeat the above command against all the OpenShift clusters where you are going to deploy the frontend and backend applications
 ====
+
+Shift to the *hybrid-cloud-demo* project:
+
+[source,bash,subs="+attributes"]
+----
+oc project {namespace}
+----
+
 
 === Update Cluster Tasks
 
@@ -89,13 +116,6 @@ oc replace \
   | oc replace -f -
 ----
 
-Shift to the *hybrid-cloud-demo* project:
-
-[source,bash,attributes]
-----
-oc project hybrd-demo
-----
-
 === Deploy Skupper
 
 To deploy Skupper Router and Controller, run the following command on each of your OpenShift Clusters:
@@ -116,36 +136,40 @@ Verify if Skupper is up and running before proceeeding to next section, you can 
 skupper status
 ----
 
-The command should show an output like:
 
-[source,bash,attributes]
+We are yet to create and connect the clouds(sites), hence you will see an output like:
+
+[source,text]
 ----
-
+Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is not connected to any other sites. It has no exposed services.
 ----
 
 === Backend 
 
 All clusters where only *backend* service tier will be deployed, run:
 
-[source,bash,attributes]
+[source,bash,subs="macros+,+attributes"]
 ----
 tkn pipeline start ksvc-deploy \
    --serviceaccount hybrid-cloud-demo-sa \
    --param APP_NAME=hybrid-cloud-backend \
    --param SERVICE_TIER=backend \
+   --param KN_MAX_SCALE=1 \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \
    --use-param-defaults \
    --showlog  
 ----
 
+Setting *KN_MAX_SCALE* for the cluster to be 1, so it can distribute the load across clouds
+
 === Frontend
 
 On the cluster where only *frontend* service tier will be deployed, run:
 
-[source,bash,attributes]
+[source,bash,subs="+attributes"]
 ----
-tkn pipeline start hybrid-cloud-svc-deploy \
+tkn pipeline start svc-deploy \
    --serviceaccount hybrid-cloud-demo-sa \
    --param APP_NAME=hybrid-cloud-frontend \
    --param SERVICE_TIER=frontend \
@@ -156,45 +180,22 @@ tkn pipeline start hybrid-cloud-svc-deploy \
 ----
 
 
-Finally create a token:
-
-[source,bash,attributes]
+[source,bash,subs="+attributes"]
 ----
-skupper connection-token token.yaml
-
-Connection token written to token.yaml
+oc get secret -n {namespace} site-token -o yaml > token.yaml
 ----
 
-In *all the other clusters*, use the connection token created in the previous step:
+In all clusters than *frontend*, use the connection token created in the previous step and connect the services to create the Virtual Application Network(VAN)
 
-[source, shell-session]
+[source,bash,subs="+attributes"]
 ----
-skupper init
-skupper connect token.yaml
+oc replace -n {namespace} -f token.yaml
 ----
 
 Everything is connected and ready to be used.
-This has been the short-version to get started, continue reading if you want to learn how to build the Docker images, deply them , etc.
 
 === Skupper UI
 
-If you run:
-
-[source, shell-session]
-----
-kubectl get services 
-
-NAME                    TYPE           CLUSTER-IP       EXTERNAL-IP                                                                  PORT(S)               AGE
-hybrid-cloud-backend    ClusterIP      172.30.32.251    <none>                                                                       8080/TCP              40m
-hybrid-cloud-frontend   LoadBalancer   172.30.25.65     add076df5798711eaad1a0241cddbab7-1371911574.eu-central-1.elb.amazonaws.com   8080:32647/TCP        39m
-kubernetes              ClusterIP      172.30.0.1       <none>                                                                       443/TCP               71m
-openshift               ExternalName   <none>           kubernetes.default.svc.cluster.local                                         <none>                70m
-skupper-controller      ClusterIP      172.30.247.104   <none>                                                                       8080/TCP              34m
-skupper-internal        ClusterIP      172.30.109.84    <none>                                                                       55671/TCP,45671/TCP   34m
-skupper-messaging       ClusterIP      172.30.64.245    <none>                                                                       5671/TCP              34m
-----
-
-You'll notice that there is a `skupper-controller` service which is the entry point for the Skupper UI.
-Expose this service so it is reachable from outside the cluster and you'll be able to access the Skupper UI.
+#TODO#
 
 

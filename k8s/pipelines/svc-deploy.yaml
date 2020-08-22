@@ -113,20 +113,20 @@ spec:
         - buildah-build-push
     - name: deploy-kubernetes-app
       taskRef:
-        name: quay.io/rhdevelopers/origin-cli-yq-jq
+        name: openshift-cli-deploy
       runAfter:
         - query-cloud-provider
       workspaces:
         - name: source
           workspace: source
-      script: |
-        #!/usr/bin/env bash
-        yq w $(workspace.source.path)/k8s/$(params.CONTEXT_DIR)/deployment.yaml \
-          'spec.template.spec.containers[0].image' '$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)' \
-          | oc apply -n $(params.SERVICE_NAMESPACE) -f -
-
-        oc set env deployment/$(params.APP_NAME) WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER) 
-
-        oc apply -n $(params.SERVICE_NAMESPACE) -f $(workspace.source.path)/k8s/$(params.CONTEXT_DIR)/service.yaml
-
-        oc expose -n $(params.SERVICE_NAMESPACE) svc $(params.APP_NAME)
+      params:
+        - name: CONTEXT_DIR
+          value: "$(params.SERVICE_TIER)"
+        - name: APP_NAME
+          value: "$(params.APP_NAME)"
+        - name: SERVICE_NAMESPACE
+          value: "$(params.SERVICE_NAMESPACE)"
+        - name: IMAGE_NAME
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)"
+        - name: WORKER_CLOUD_ID
+          value: "$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)"

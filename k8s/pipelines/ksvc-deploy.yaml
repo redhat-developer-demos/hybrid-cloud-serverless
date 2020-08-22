@@ -35,6 +35,10 @@ spec:
       description: >-
         The maximum number of concurrent requests to allow per service pod
       default: "1"
+    - name: KN_MAX_SCALE
+      description: >-
+        The maximum number of pods the service scale upto. Defaults to 0, which means unlimited.
+      default: "0"
   workspaces:
     - name: source
     - name: maven-settings
@@ -130,7 +134,16 @@ spec:
             - --force
             - --image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
             - --concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)
+            - --max-scale=$(params.KN_MAX_SCALE)
             - --label=app.kubernetes.io/part-of=hybrid-cloud-demo
-            - --annotation=skupper.io/proxy=http
-            - --annotation=skupper.io/target=$(params.APP_NAME).$(params.SERVICE_NAMESPACE)
             - --env=WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)
+    - name: skupperize-kn-service
+      taskRef:
+        name: kn-skupper-service
+      runAfter:
+        - deploy-kn-service
+      params:
+        - name: APP_NAME
+          value: "$(params.APP_NAME)"
+        - name: SERVICE_NAMESPACE
+          value: "$(params.SERVICE_NAMESPACE)"

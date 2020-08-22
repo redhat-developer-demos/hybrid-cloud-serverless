@@ -1,0 +1,32 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: kn-skupper-service
+spec:
+  description: >-
+    Creates Skupper proxy for a Knative Service
+  params:
+    - name: APP_NAME
+      description: The OpenShift Application Name
+    - name: SERVICE_NAMESPACE
+      description: The OpenShift Application Namespace
+  steps:
+    - name: oc
+      image: quay.io/rhdevelopers/origin-cli-yq-jq
+      script: |
+        #!/usr/bin/env bash
+        set -e
+        cat <<EOF | oc apply -n "$(params.SERVICE_NAMESPACE)" -f -
+          apiVersion: v1
+          kind: Service
+          metadata:
+            annotations:
+              skupper.io/proxy: http
+              skupper.io/target: "$(params.APP_NAME).$(params.SERVICE_NAMESPACE)"
+            name: "$(params.APP_NAME)-skupper"
+          spec:
+            ports:
+            - name: http
+              port: 80
+            type: LoadBalancer
+        EOF

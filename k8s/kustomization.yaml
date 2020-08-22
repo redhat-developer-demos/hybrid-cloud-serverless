@@ -4,28 +4,5 @@ kind: Kustomization
 # Adds namespace to all resources.
 namespace: hybrid-cloud-demo
 
-# Adds hybrid-cloud-demo label to all resources.
-commonLabels:
-  app.kubernetes.io/part-of: hybrid-cloud-demo
-
 generatorOptions:
   disableNameSuffixHash: true
-
-configMapGenerator:
-  - name: maven-settings
-    behavior: create
-    files:
-      - settings.xml
-
-resources:
-  - core/namespace.yaml
-  - rbac/skupper-site-controller.yaml
-  - rbac/kn-deployer.yaml
-  - core/pvcs.yaml
-  - core/nexus.yaml
-  - skupper/controller.yaml
-  - pipelines/cloud-identifer-task.yaml
-  - pipelines/skupper-site-task.yaml
-  - pipelines/ksvc-deploy.yaml
-  - pipelines/svc-deploy.yaml
-  - pipelines/skupper-site-deploy.yaml
