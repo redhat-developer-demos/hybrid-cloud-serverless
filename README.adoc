@@ -153,7 +153,7 @@ All clusters where only *backend* service tier will be deployed, run:
 tkn pipeline start ksvc-deploy \
    --serviceaccount hybrid-cloud-demo-sa \
    --param APP_NAME=hybrid-cloud-backend \
-   --param SERVICE_TIER=backend \
+   --param SERVICE=prime-generator \
    --param KN_MAX_SCALE=1 \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \

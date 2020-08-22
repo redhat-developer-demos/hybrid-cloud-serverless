@@ -21,9 +21,9 @@ spec:
       description: >-
         The fully qualified image name e.g example.com/tekton-tutorial/helloworld
       default: image-registry.openshift-image-registry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
-    - name: SERVICE_TIER
+    - name: SERVICE
       description: >-
-        The service tier for the application allowed values "backend" or "frontend"
+        The service  for the application allowed values "backend" or "prime-generator" or "frontend"
     - name: APP_NAME
       description: >-
         The Knative Service Name
@@ -67,7 +67,7 @@ spec:
         - clone-sources
       params:
         - name: GOALS
-          value: ["-pl", "$(params.SERVICE_TIER)", "-B", "clean", "test"]
+          value: ["-pl", "$(params.SERVICE)", "-B", "clean", "test"]
       workspaces:
         - name: maven-settings
           workspace: maven-settings
@@ -84,7 +84,7 @@ spec:
           value:
             [
               "-pl",
-              "$(params.SERVICE_TIER)",
+              "$(params.SERVICE)",
               "-B",
               "-DskipTests",
               "clean",
@@ -103,11 +103,11 @@ spec:
         - maven-package
       params:
         - name: CONTEXT
-          value: "$(params.SERVICE_TIER)"
+          value: "$(params.SERVICE)"
         - name: DOCKERFILE
-          value: "$(params.SERVICE_TIER)/Dockerfile"
+          value: "$(params.SERVICE)/Dockerfile"
         - name: IMAGE
-          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)"
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE)"
         # since pushing to internal registry we skip TLS verify
         - name: TLSVERIFY
           value: "false"
@@ -132,7 +132,7 @@ spec:
             - create
             - $(params.APP_NAME)
             - --force
-            - --image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
+            - --image=$(params.IMAGE_NAME)-$(params.SERVICE)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
             - --concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)
             - --max-scale=$(params.KN_MAX_SCALE)
             - --label=app.kubernetes.io/part-of=hybrid-cloud-demo
