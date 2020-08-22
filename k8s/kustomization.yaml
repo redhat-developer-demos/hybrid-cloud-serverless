@@ -2,11 +2,11 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 # Adds namespace to all resources.
-namespace: hybrid-demo
+namespace: hybrid-cloud-demo
 
-# Adds hybrid-demo label to all resources.
+# Adds hybrid-cloud-demo label to all resources.
 commonLabels:
-  app: hybrid-demo
+  app.kubernetes.io/part-of: hybrid-cloud-demo
 
 generatorOptions:
   disableNameSuffixHash: true
@@ -27,4 +27,5 @@ resources:
   - pipelines/cloud-identifer-task.yaml
   - pipelines/skupper-site-task.yaml
   - pipelines/ksvc-deploy.yaml
+  - pipelines/svc-deploy.yaml
   - pipelines/skupper-site-deploy.yaml

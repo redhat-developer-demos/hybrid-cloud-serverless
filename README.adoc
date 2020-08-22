@@ -1,5 +1,6 @@
 = Hybrid Cloud
 :experimental:
+:namespace: hybrid-cloud-demo
 
 image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/backend/badge.svg[]
 image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/frontend/badge.svg[]
@@ -39,7 +40,7 @@ IMPORTANT: You need to run this command once against each Cluster with respectiv
 
 === Preparing Namespace
 
-The demo will be deployed in the namespace `hybrid-demo`, the namespace need to be prepared with the following resources:
+The demo will be deployed in the namespace `{namespace}`, the namespace need to be prepared with the following resources:
 
 - The namespace itself need to be created
 - Service Account with right roles needed for Skupper and Kn Service Deployment
@@ -61,7 +62,34 @@ oc apply -k $REPO_HOME/k8s/
 - Repeat the above command against all the OpenShift clusters where you are going to deploy the frontend and backend applications
 ====
 
-Shift to the *hybrid-demo* project:
+=== Update Cluster Tasks
+
+[source,bash,attributes]
+----
+oc replace \
+  -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/buildah/0.1/buildah.yaml --dry-run=client -oyaml \
+  | yq w - kind ClusterTask \
+  | oc replace -f -
+----
+
+
+[source,bash,attributes]
+----
+oc replace \
+  -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/maven/0.1/maven.yaml --dry-run=client -oyaml \
+  | yq w - kind ClusterTask \
+  | oc replace -f -
+----
+
+[source,bash,attributes]
+----
+oc replace \
+  -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/kn/0.1/kn.yaml --dry-run=client -oyaml \
+  | yq w - kind ClusterTask \
+  | oc replace -f -
+----
+
+Shift to the *hybrid-cloud-demo* project:
 
 [source,bash,attributes]
 ----
@@ -101,14 +129,32 @@ All clusters where only *backend* service tier will be deployed, run:
 
 [source,bash,attributes]
 ----
-tkn pipeline start hybrid-cloud-demo-deploy \
-   --serviceaccount kn-service-deployer-account \
-   --param APP_NAME=backend \
+tkn pipeline start ksvc-deploy \
+   --serviceaccount hybrid-cloud-demo-sa \
+   --param APP_NAME=hybrid-cloud-backend \
+   --param SERVICE_TIER=backend \
+   --workspace=name=source,claimName=hybrid-cloud-demo-sources \
+   --workspace=name=maven-settings,config=maven-settings \
    --use-param-defaults \
    --showlog  
 ----
 
 === Frontend
+
+On the cluster where only *frontend* service tier will be deployed, run:
+
+[source,bash,attributes]
+----
+tkn pipeline start hybrid-cloud-svc-deploy \
+   --serviceaccount hybrid-cloud-demo-sa \
+   --param APP_NAME=hybrid-cloud-frontend \
+   --param SERVICE_TIER=frontend \
+   --workspace=name=source,claimName=hybrid-cloud-demo-sources \
+   --workspace=name=maven-settings,config=maven-settings \
+   --use-param-defaults \
+   --showlog  
+----
+
 
 Finally create a token:
 

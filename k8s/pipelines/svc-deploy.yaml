@@ -1,13 +1,13 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: ksvc-deploy
+  name: svc-deploy
   labels:
     pipeline.openshift.io/runtime: java
-    pipeline.openshift.io/type: knative
+    #pipeline.openshift.io/type: knative
 spec:
   description: >-
-    The Pipline to build and deploy the Hybrid Cloud Demo Java App https://github.com/redhat-developer-demos/hybrid-cloud as Knative Service.
+    The Pipline to build and deploy the Hybrid Cloud Demo Java App https://github.com/redhat-developer-demos/hybrid-cloud as a Kubernetes Service.
   params:
     - name: GITHUB_REPO_URL
       description: >-
@@ -26,15 +26,11 @@ spec:
         The service tier for the application allowed values "backend" or "frontend"
     - name: APP_NAME
       description: >-
-        The Knative Service Name
+        The Service Name
     - name: SERVICE_NAMESPACE
       description: >-
-        The Knative Service Namespace
+        The Service Namespace
       default: hybrid-cloud-demo
-    - name: KN_CONCURRENCY_LIMIT
-      description: >-
-        The maximum number of concurrent requests to allow per service pod
-      default: "1"
   workspaces:
     - name: source
     - name: maven-settings
@@ -115,22 +111,22 @@ spec:
         name: cloud-identifier
       runAfter:
         - buildah-build-push
-    - name: deploy-kn-service
+    - name: deploy-kubernetes-app
       taskRef:
-        name: kn
-        kind: ClusterTask
+        name: quay.io/rhdevelopers/origin-cli-yq-jq
       runAfter:
         - query-cloud-provider
-      params:
-        - name: ARGS
-          value:
-            - service
-            - create
-            - $(params.APP_NAME)
-            - --force
-            - --image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
-            - --concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)
-            - --label=app.kubernetes.io/part-of=hybrid-cloud-demo
-            - --annotation=skupper.io/proxy=http
-            - --annotation=skupper.io/target=$(params.APP_NAME).$(params.SERVICE_NAMESPACE)
-            - --env=WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)
+      workspaces:
+        - name: source
+          workspace: source
+      script: |
+        #!/usr/bin/env bash
+        yq w $(workspace.source.path)/k8s/$(params.CONTEXT_DIR)/deployment.yaml \
+          'spec.template.spec.containers[0].image' '$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)' \
+          | oc apply -n $(params.SERVICE_NAMESPACE) -f -
+
+        oc set env deployment/$(params.APP_NAME) WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER) 
+
+        oc apply -n $(params.SERVICE_NAMESPACE) -f $(workspace.source.path)/k8s/$(params.CONTEXT_DIR)/service.yaml
+
+        oc expose -n $(params.SERVICE_NAMESPACE) svc $(params.APP_NAME)
