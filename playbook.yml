@@ -1,10 +1,13 @@
----
 - name: OpenShift Serverless with OpenShift Pipelines
-  hosts: all
+  hosts: localhost
   connection: local
-  no_log: "{{ quiet }}"
+  # no_log: "{{ quiet }}"
   
+  collections:
+   - community.kubernetes
+
   vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
     ocp_version: 4.5.6
     download_clients: False
     deploy_serverless: True
@@ -18,10 +21,10 @@
       prefix: user
     user_password: ""
 
-  environment:
-    K8S_AUTH_KUBECONFIG: "{{ kubeconfig }}"
+  tasks:
+    - debug: var=group_names
 
-  roles:
-    - kameshsampath.openshift_app_spices
-  
-  
+    - name: Create Demo Namespace in all clusters
+      community.kubernetes.k8s:
+        kind: Namespace
+        name: ansible-demo

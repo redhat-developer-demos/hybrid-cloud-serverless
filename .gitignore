@@ -16,5 +16,6 @@ artifacts/**
 inventory/**
 !inventory/hostsdocs.old
 .cache
-openshift.yml
-openshift.yaml
+inventory/*
+!inventory/README.md
+!inventory/hosts.example
