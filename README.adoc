@@ -47,9 +47,11 @@ The demo will be deployed in the namespace `{namespace}`, the namespace need to 
 - PeristentVolumeClaims(PVC) *hybrid-cloud-demo-sources* to hold the cloned resources
 - ConfigMap called *maven-settings* to have the maven settings
 - Soantype nexus for faster and quicker builds maven builds
-- Finally the Tektoncd pipeline *hybrid-cloud-demo-deploy* to build and deploy the sources
+- Finally the Tektoncd pipeline 
+    - *ksvc-deploy*:  to build and deploy the sources as Knative Service
+    - *svc-deply*:  to build and deploy the sources as normal Kubernetes Service
 
-Deploy these required resources by running:
+Create the following essential resources before running the demo pipelines:
 
 Create the Service Account and required Roles and RoleBindings:
 
@@ -63,6 +65,13 @@ Create Namespace, nexus, persistent volumes:
 [source,bash,attributes]
 ----
 oc apply -k $REPO_HOME/k8s/core
+----
+
+Wait for the nexus deployment to complete:
+
+[source,bash,attributes]
+----
+oc rollout status --watch --timeout=180s deploy nexus
 ----
 
 Create the Pipelines tasks:
@@ -81,7 +90,6 @@ oc apply -k $REPO_HOME/k8s/skupper
 
 [IMPORTANT]
 ====
-- Wait for nexus to run before deploying backend and front services as he maven builds will use the nexus repository to cache the artifacts
 - Repeat the above command against all the OpenShift Clusters where you are going to deploy the frontend and backend applications
 ====
 
@@ -151,12 +159,14 @@ Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is n
 
 All clusters where only *backend* service tier will be deployed, run:
 
+==== Knative
+
 [source,bash,subs="macros+,+attributes"]
 ----
 tkn pipeline start ksvc-deploy \
    --serviceaccount hybrid-cloud-demo-sa \
    --param APP_NAME=hybrid-cloud-backend \
-   --param SERVICE=prime-generator \
+   --param SERVICE=backend \
    --param KN_MAX_SCALE=1 \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \
@@ -164,7 +174,25 @@ tkn pipeline start ksvc-deploy \
    --showlog  
 ----
 
-Setting *KN_MAX_SCALE* for the cluster to be 1, so it can distribute the load across clouds
+Setting *KN_MAX_SCALE* for the cluster to be 1, so it can distribute the load across clouds.
+
+The successfull deployment creates a Skupper HTTP Proxy for the backened called *hybrid-cloud-backend-skupper*. The Frontends should the service *hybrid-cloud-backend-skupper* for connecting with backend API.
+
+==== Vanilla Kubernetes Application
+
+[source,bash,subs="macros+,+attributes"]
+----
+tkn pipeline start svc-deploy \
+   --serviceaccount hybrid-cloud-demo-sa \
+   --param APP_NAME=hybrid-cloud-backend \
+   --param SERVICE_TIER=backend \
+   --workspace=name=source,claimName=hybrid-cloud-demo-sources \
+   --workspace=name=maven-settings,config=maven-settings \
+   --use-param-defaults \
+   --showlog  
+----
+
+NOTE: First deplolyment will take some time as Maven artfiacts need to be downloaded and cached in nexus
 
 === Frontend
 
@@ -176,12 +204,12 @@ tkn pipeline start svc-deploy \
    --serviceaccount hybrid-cloud-demo-sa \
    --param APP_NAME=hybrid-cloud-frontend \
    --param SERVICE_TIER=frontend \
+   --param BACKEND_SERVICE_URL='http://hybrid-cloud-backend-skupper:8080' \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \
    --use-param-defaults \
    --showlog  
 ----
-
 
 [source,bash,subs="+attributes"]
 ----
@@ -192,10 +220,34 @@ In all clusters than *frontend*, use the connection token created in the previou
 
 [source,bash,subs="+attributes"]
 ----
-oc replace -n {namespace} -f token.yaml
+oc create -n {namespace} -f token.yaml
 ----
 
 Everything is connected and ready to be used.
+
+=== Knative Burst
+
+Open three terminals (one for each cloud ) to watch:
+
+[source,bash,subs="+attributes"]
+----
+watch oc get pods -l=serving.knative.dev/configuration=hybrid-cloud-backend
+----
+
+Since all the backen concurrency is set to `1`, trying the following load test will distrbute the Knative load across all the clouds where the backend is deployed:
+
+[source,bash,subs="+attributes"]
+----
+hey -z 10s -c 50 \
+  -m POST \
+  -H "Content-Type: application/json" \
+  -d '{"maximumNumber": 10000,"sleepInSeconds": 3, "memoryLoadInMB": 100 }' \
+  https://hybrid-cloud-frontend-hybrid-cloud-demo.apps.gcp.kameshs.dev/api/prime
+----
+
+With that above command you see the distribution of load across all the clouds once the *MAX_SCALE* value exceeds in the closest cloud(site).
+
+
 
 === Skupper UI
 

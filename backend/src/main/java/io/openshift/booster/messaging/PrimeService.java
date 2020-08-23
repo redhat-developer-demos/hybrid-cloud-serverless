@@ -1,4 +1,4 @@
-package com.redhat.developers.demos;
+package io.openshift.booster.messaging;
 
 
 import java.util.*;

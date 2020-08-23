@@ -20,7 +20,7 @@ spec:
     - name: CONSOLE_AUTHENTICATION
       description: >-
         The authentication method for skupper console, possible values are: openshift or internal or unsecured
-      default: "internal"
+      default: "openshift"
     - name: CONSOLE_USER
       description: >-
         The console login user for internal option

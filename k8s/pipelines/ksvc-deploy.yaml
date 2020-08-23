@@ -21,9 +21,9 @@ spec:
       description: >-
         The fully qualified image name e.g example.com/tekton-tutorial/helloworld
       default: image-registry.openshift-image-registry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
-    - name: SERVICE
+    - name: SERVICE_TIER
       description: >-
-        The service  for the application allowed values "backend" or "prime-generator" or "frontend"
+        The service  for the application allowed values "backend" or "frontend"
     - name: APP_NAME
       description: >-
         The Knative Service Name
@@ -67,7 +67,7 @@ spec:
         - clone-sources
       params:
         - name: GOALS
-          value: ["-pl", "$(params.SERVICE)", "-B", "clean", "test"]
+          value: ["-pl", "$(params.SERVICE_TIER)", "-B", "clean", "test"]
       workspaces:
         - name: maven-settings
           workspace: maven-settings
@@ -84,7 +84,7 @@ spec:
           value:
             [
               "-pl",
-              "$(params.SERVICE)",
+              "$(params.SERVICE_TIER)",
               "-B",
               "-DskipTests",
               "clean",
@@ -103,11 +103,11 @@ spec:
         - maven-package
       params:
         - name: CONTEXT
-          value: "$(params.SERVICE)"
+          value: "$(params.SERVICE_TIER)"
         - name: DOCKERFILE
-          value: "$(params.SERVICE)/Dockerfile"
+          value: "$(params.SERVICE_TIER)/Dockerfile"
         - name: IMAGE
-          value: "$(params.IMAGE_NAME)-$(params.SERVICE)"
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)"
         # since pushing to internal registry we skip TLS verify
         - name: TLSVERIFY
           value: "false"
@@ -132,32 +132,37 @@ spec:
             - create
             - $(params.APP_NAME)
             - --force
-            - --image=$(params.IMAGE_NAME)-$(params.SERVICE)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
+            - --image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
             - --concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)
             - --max-scale=$(params.KN_MAX_SCALE)
             - --label=app.kubernetes.io/part-of=hybrid-cloud-demo
             - --env=WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)
     - name: skupperize-kn-service
-      taskRef:
-        name: kn-skupper-service
       runAfter:
         - deploy-kn-service
+      workspaces:
+        - name: source
+          workspace: source
+      taskRef:
+        name: openshift-cli-deploy
       params:
         - name: SCRIPT
           value: |
             #!/usr/bin/env bash
-            set -e
-            cat <<EOF | oc replace -n "$(params.SERVICE_NAMESPACE)" -f -
-              apiVersion: v1
-              kind: Service
-              metadata:
-                annotations:
-                  skupper.io/proxy: http
-                  skupper.io/target: "$(params.APP_NAME).$(params.SERVICE_NAMESPACE)"
-                name: "$(params.APP_NAME)-skupper"
-              spec:
-                ports:
-                - name: http
-                  port: 80
-                type: LoadBalancer
+            if ! oc get svc -n "$(params.SERVICE_NAMESPACE)" "$(params.APP_NAME)-skupper";
+            then
+            cat <<-EOF | oc create -n "$(params.SERVICE_NAMESPACE)" -f -
+            apiVersion: v1
+            kind: Service
+            metadata:
+              annotations:
+                skupper.io/proxy: http
+                skupper.io/target: "$(params.APP_NAME).$(params.SERVICE_NAMESPACE)"
+              name: "$(params.APP_NAME)-skupper"
+            spec:
+              ports:
+              - name: http
+                port: 80
+              type: LoadBalancer
             EOF
+            fi
