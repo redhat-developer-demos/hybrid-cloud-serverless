@@ -8,9 +8,6 @@ commonLabels:
 resources:
   - cloud-identifer-task.yaml
   - skupper-site-task.yaml
-  - kn-skupper-service-task.yaml
   - ksvc-deploy.yaml
   - svc-deploy.yaml
   - skupper-site-deploy.yaml
-# bases:
-#   - ../

@@ -1,11 +1,12 @@
-package org.workspace7.primegen;
+package com.redhat.developers.demos;
+
 
 import java.util.*;
 import javax.enterprise.context.ApplicationScoped;
 
 /**
- * PrimeService 
- * Generate biggest prime number based on https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
+ * PrimeService Generate biggest prime number based on
+ * https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes
  */
 @ApplicationScoped
 public class PrimeService {
@@ -45,9 +46,9 @@ public class PrimeService {
         primes.add(i);
       }
     }
-    
+
     Optional<Integer> optBig = primes.stream().max(Comparator.naturalOrder());
-    
+
     return optBig.get();
   }
 }

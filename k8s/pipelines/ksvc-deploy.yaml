@@ -143,7 +143,21 @@ spec:
       runAfter:
         - deploy-kn-service
       params:
-        - name: APP_NAME
-          value: "$(params.APP_NAME)"
-        - name: SERVICE_NAMESPACE
-          value: "$(params.SERVICE_NAMESPACE)"
+        - name: SCRIPT
+          value: |
+            #!/usr/bin/env bash
+            set -e
+            cat <<EOF | oc replace -n "$(params.SERVICE_NAMESPACE)" -f -
+              apiVersion: v1
+              kind: Service
+              metadata:
+                annotations:
+                  skupper.io/proxy: http
+                  skupper.io/target: "$(params.APP_NAME).$(params.SERVICE_NAMESPACE)"
+                name: "$(params.APP_NAME)-skupper"
+              spec:
+                ports:
+                - name: http
+                  port: 80
+                type: LoadBalancer
+            EOF

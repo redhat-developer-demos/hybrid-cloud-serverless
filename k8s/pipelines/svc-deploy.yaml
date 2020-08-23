@@ -120,13 +120,30 @@ spec:
         - name: source
           workspace: source
       params:
-        - name: CONTEXT_DIR
-          value: "$(params.SERVICE_TIER)"
-        - name: APP_NAME
-          value: "$(params.APP_NAME)"
-        - name: SERVICE_NAMESPACE
-          value: "$(params.SERVICE_NAMESPACE)"
-        - name: IMAGE_NAME
-          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)"
-        - name: WORKER_CLOUD_ID
-          value: "$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)"
+        - name: SCRIPT
+          value: |
+            #!/usr/bin/env bash
+            set -e
+
+            # Create the Deployment
+
+            yq w "$(workspaces.source.path)/k8s/$(params.CONTEXT_DIR)/deployment.yaml" \
+              'spec.template.spec.containers[0].image' '$(params.IMAGE_NAME)' \
+              | oc replace -n $(params.SERVICE_NAMESPACE) -f -
+
+            oc set env "deployment/$(params.APP_NAME)" "WORKER_CLOUD_ID=$(params.WORKER_CLOUD_ID) "
+
+            # Create the Service 
+            yq w "$(workspaces.source.path)/k8s/$(params.CONTEXT_DIR)/service.yaml" metadata.name "$(params.APP_NAME)" \
+            | yq w "$(workspaces.source.path)/k8s/$(params.CONTEXT_DIR)/service.yaml" spec.selector.app "$(params.APP_NAME)" \
+            | oc replace -n "$(params.SERVICE_NAMESPACE)" -f -
+
+            # Create the Route
+            oc create route edge -n "$(params.SERVICE_NAMESPACE)" "$(params.APP_NAME)" --service="$(params.APP_NAME)" --port="http" --insecure-policy="passthrough"
+
+            # if its frontend create the skupper token, ideally we can create from # any site 
+            if [ "$(params.CONTEXT_DIR)" == "frontend" ];
+            then
+              oc replace secret generic -n "$(params.SERVICE_NAMESPACE)" site-token || true
+              oc label secret/site-token skupper.io/type=connection-token-request
+            fi

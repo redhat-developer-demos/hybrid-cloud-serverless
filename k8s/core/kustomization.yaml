@@ -18,6 +18,3 @@ resources:
   - namespace.yaml
   - pvcs.yaml
   - nexus.yaml
-
-bases:
-  - ../

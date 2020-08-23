@@ -51,25 +51,29 @@ The demo will be deployed in the namespace `{namespace}`, the namespace need to 
 
 Deploy these required resources by running:
 
-.RBAC
+Create the Service Account and required Roles and RoleBindings:
+
 [source,bash,attributes]
 ----
 oc apply -k $REPO_HOME/k8s/rbac
 ----
 
-.Core
+Create Namespace, nexus, persistent volumes:
+
 [source,bash,attributes]
 ----
 oc apply -k $REPO_HOME/k8s/core
 ----
 
-.Pipelines
+Create the Pipelines tasks:
+
 [source,bash,attributes]
 ----
 oc apply -k $REPO_HOME/k8s/pipelines
 ----
 
-.Skupper
+Deploy Skupper Site Controller
+
 [source,bash,attributes]
 ----
 oc apply -k $REPO_HOME/k8s/skupper
@@ -77,8 +81,8 @@ oc apply -k $REPO_HOME/k8s/skupper
 
 [IMPORTANT]
 ====
-- Wait for nexus to run before deploying backend and front services
-- Repeat the above command against all the OpenShift clusters where you are going to deploy the frontend and backend applications
+- Wait for nexus to run before deploying backend and front services as he maven builds will use the nexus repository to cache the artifacts
+- Repeat the above command against all the OpenShift Clusters where you are going to deploy the frontend and backend applications
 ====
 
 Shift to the *hybrid-cloud-demo* project:
@@ -87,7 +91,6 @@ Shift to the *hybrid-cloud-demo* project:
 ----
 oc project {namespace}
 ----
-
 
 === Update Cluster Tasks
 

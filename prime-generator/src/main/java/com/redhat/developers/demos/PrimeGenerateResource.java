@@ -1,27 +1,32 @@
-package org.workspace7.primegen;
+package com.redhat.developers.demos;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import io.vertx.core.json.Json;
+import io.vertx.core.json.JsonObject;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-@Path("/")
+@Path("/api")
 public class PrimeGenerateResource {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PrimeGenerateResource.class);
 
-
   @Inject
   PrimeService primeService;
 
-  @GET
-  @Produces(MediaType.TEXT_PLAIN)
-  @Path("/")
-  public Response getPrimes(@QueryParam("upto") int upto, @QueryParam("sleep") int sleepInSeconds,
-      @QueryParam("memload") int memLoad) {
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/prime")
+  public Response getPrimes(PrimeNumberRequest primeNumberRequest) {
+    var upto = primeNumberRequest.maximumNumber;
+    var sleepInSeconds = primeNumberRequest.sleepInSeconds;
+    var memLoad = primeNumberRequest.memoryLoadInMB;
 
     LOGGER.info("Query Parameters Upto {} Sleep in seconds {} Memory Load {} ", upto,
         sleepInSeconds, memLoad);
@@ -40,8 +45,9 @@ public class PrimeGenerateResource {
     }
 
     int bigPrime = primeService.biggestPrime(upto);
+    JsonObject result = new JsonObject().put("biggestPrime", bigPrime);
 
-    return Response.ok(bigPrime).build();
+    return Response.ok(Json.encodePrettily(result)).build();
   }
 
   /**

@@ -8,6 +8,3 @@ commonLabels:
 resources:
   - hybrid-cloud-demo.yaml
   - skupper-site-controller.yaml
-
-bases:
-  - ../

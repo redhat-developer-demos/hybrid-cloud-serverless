@@ -4,42 +4,14 @@ metadata:
   name: openshift-cli-deploy
 spec:
   description: >-
-    Runs openshift client to deploy the Kubernetes Applications
+    Runs openshift client. The task can use tools like yq/jq for extra processing of the Kubernetes manifests.
   workspaces:
     - name: source
   params:
-    - name: CONTEXT_DIR
-      description: The context directory within the sources
-      default: "."
-    - name: APP_NAME
-      description: The OpenShift Application Name
-    - name: SERVICE_NAMESPACE
-      description: The OpenShift Application Namespace
-    - name: IMAGE_NAME
-      description: The Container Image to be used for deployment
-    - name: WORKER_CLOUD_ID
-      description: The underlying cloud provider acronymn
-      default: "unknown"
+    - name: SCRIPT
+      description: The OpenShift script to run
+      default: "oc --help"
   steps:
     - name: oc
       image: quay.io/rhdevelopers/origin-cli-yq-jq
-      script: |
-        #!/usr/bin/env bash
-        set -e
-
-        yq w "$(workspaces.source.path)/k8s/$(params.CONTEXT_DIR)/deployment.yaml" \
-          'spec.template.spec.containers[0].image' '$(params.IMAGE_NAME)' \
-          | oc apply -n $(params.SERVICE_NAMESPACE) -f -
-
-        oc set env "deployment/$(params.APP_NAME)" "WORKER_CLOUD_ID=$(params.WORKER_CLOUD_ID) "
-
-        oc apply -n "$(params.SERVICE_NAMESPACE)" -f "$(workspaces.source.path)/k8s/$(params.CONTEXT_DIR)/service.yaml"
-
-        oc expose -n "$(params.SERVICE_NAMESPACE)" svc "$(params.APP_NAME)"
-
-        # if its frontend create the skupper token, ideally we can create from # any site 
-        if [ "$(params.CONTEXT_DIR)" == "frontend" ];
-        then
-           oc create secret generic -n "$(params.SERVICE_NAMESPACE)" site-token
-           oc label secret/site-token skupper.io/type=connection-token-request
-        fi
+      script: $(params.SCRIPT)
