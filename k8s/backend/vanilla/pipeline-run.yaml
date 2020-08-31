@@ -1,0 +1,21 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: svc-deploy-run-
+  namespace: hybrid-cloud-demo
+spec:
+  params:
+    - name: APP_NAME
+      value: hybrid-cloud-backend
+    - name: SERVICE_TIER
+      value: backend
+  pipelineRef:
+    name: svc-deploy
+  serviceAccountName: hybrid-cloud-demo-sa
+  workspaces:
+    - name: source
+      persistentVolumeClaim:
+        claimName: hybrid-cloud-demo-sources
+    - configMap:
+        name: maven-settings
+      name: maven-settings
