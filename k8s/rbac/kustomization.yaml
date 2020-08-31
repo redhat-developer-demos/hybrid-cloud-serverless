@@ -9,6 +9,5 @@ commonLabels:
   app.kubernetes.io/part-of: hybrid-cloud-demo
 
 resources:
-  - namespace.yaml
   - hybrid-cloud-demo.yaml
   - skupper-site-controller.yaml
