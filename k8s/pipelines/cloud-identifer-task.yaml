@@ -20,6 +20,9 @@ spec:
         elif [ $cloud_provider == "azure" ]
         then 
           cloud_provider="azr"
+        elif [ -z $cloud_provider ];
+        then
+          cloud_provider="unknown"  
         fi 
         echo "You are using ${cloud_provider^^}"
         echo "${cloud_provider^^}" | tee $(results.CLOUD_PROVIDER.path)
