@@ -1,6 +1,5 @@
 metadata:
   name: hybrid-cloud
-  namespace: argocd
 spec:
   clusterResourceWhitelist:
     - group: ""

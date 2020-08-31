@@ -1,27 +1,25 @@
----
-- name: OpenShift Serverless with OpenShift Pipelines
-  hosts: all
+- name: Serverless with OpenShift Pipelines and Argo CD
+  hosts: localhost
   connection: local
-  no_log: "{{ quiet }}"
-  
+
   vars:
     ocp_version: 4.5.6
     download_clients: False
     deploy_serverless: True
-    deploy_kafka: False
-    deploy_camel_k: False
     deploy_pipelines: True
+    deploy_argocd: True
+    argocd_namespace: argocd
     users:
       create: True
       start: 0
       end: 0
       prefix: user
-    user_password: ""
+    argocd_manifests_dir: argocd
 
   environment:
-    K8S_AUTH_KUBECONFIG: "{{ kubeconfig }}"
+    K8S_AUTH_KUBECONFIG: '{{ kubeconfig }}'
 
   roles:
     - kameshsampath.openshift_app_spices
-  
-  
+
+- import_playbook: add_tasks.yml

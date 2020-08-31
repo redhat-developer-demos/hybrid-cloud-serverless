@@ -1,18 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: skupper
+  name: backend-app-pipelines
 spec:
   destination:
     namespace: hybrid-cloud-demo
     server: "https://kubernetes.default.svc"
   source:
-    path: k8s/skupper
+    path: k8s/pipelines/backend
     repoURL: "http://github.com/redhat-developer-demos/hybrid-cloud"
     targetRevision: knative
-    kustomize:
-      images:
-        - "quay.io/skupper/site-controller:0.3"
   project: hybrid-cloud
   syncPolicy:
     automated:

@@ -8,7 +8,7 @@ spec:
     server: "https://kubernetes.default.svc"
   source:
     path: k8s/pipelines
-    repoURL: "http://gogs.192.168.39.197.nip.io/gogs/hybrid-cloud"
+    repoURL: "http://github.com/redhat-developer-demos/hybrid-cloud"
     targetRevision: knative
   project: hybrid-cloud
   syncPolicy:

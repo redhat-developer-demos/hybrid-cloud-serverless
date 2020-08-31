@@ -1,8 +1,0 @@
-# Example Google Cloud 
-gcp ansible_host=localhost kubeconfig=/runner/inventory/gcp.kubeconfig cloud_profile=gcp 
-
-# Example AWS
-aws ansible_host=localhost kubeconfig=/runner/inventory/aws.kubeconfig cloud_profile=aws
-
-# Example Azure
-azr ansible_host=localhost kubeconfig=/runner/inventory/azr.kubeconfig cloud_profile=azr

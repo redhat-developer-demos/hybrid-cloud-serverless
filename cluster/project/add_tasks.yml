@@ -1,0 +1,54 @@
+---
+- name: Add Tasks to Tektoncd
+  hosts: localhost
+  connection: local
+
+  collections:
+    - community.kubernetes
+
+  vars:
+    minikube_profile_name: tektontutorial
+    # OpenShift Pipelines TP 1.1
+    tektoncd_pipelines_version: v0.14.3
+    tektoncd_triggers_version: v0.6.1
+
+    tasks_dir: /tmp/tektoncd/tasks
+
+    cluster_tasks:
+      - name: buildah
+        manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/buildah/0.1/buildah.yaml"
+      - name: maven
+        manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/maven/0.1/maven.yaml"
+      - name: kn
+        manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/kn/0.1/kn.yaml"
+      - name: git-clone
+        manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.1/git-clone.yaml"
+      - name: openshift-client
+        manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/openshift-client/0.1/openshift-client.yaml"
+
+  tasks:
+    - name: Create Manifests Dir
+      file:
+        path: "{{ tasks_dir }}"
+        state: directory
+
+    - name: Download Task manifests
+      get_url:
+        url: "{{ item.manifest_url }}"
+        dest: "{{ [tasks_dir,item.name] | join('/') }}.yaml"
+        mode: "666"
+      with_items: "{{ cluster_tasks }}"
+
+    - name: Convert Task to Cluster Tasks
+      replace:
+        path: "{{ [tasks_dir,item.name] | join('/') }}.yaml"
+        regexp: '(^kind:\s*)Task$'
+        replace: '\1ClusterTask'
+        backup: yes
+      with_items: "{{ cluster_tasks }}"
+
+    - name: Deploy Cluster Tasks
+      community.kubernetes.k8s:
+        state: present
+        src: "{{ [tasks_dir,item.name] | join('/') }}.yaml"
+      with_items: "{{ cluster_tasks }}"

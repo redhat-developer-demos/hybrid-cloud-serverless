@@ -19,3 +19,5 @@ inventory/**
 inventory/*
 !inventory/README.md
 !inventory/hosts.example
+!cluster/project/playbook.yml
+**/.kube

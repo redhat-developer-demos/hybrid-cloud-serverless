@@ -1,0 +1,1 @@
+gcp ansible_host=localhost kubeconfig=/runner/inventory/gcp.kubeconfig cloud_profile=gcp
