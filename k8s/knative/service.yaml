@@ -1,0 +1,19 @@
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hybrid-cloud-backend
+spec:
+  template:
+    spec:
+      containers:
+        - image: quay.io/kameshsampath/hybrid-cloud-kn
+          livenessProbe:
+            httpGet:
+              path: /health/live
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+          env:
+            - name: WORKER_CLOUD_ID
+              value: $(WORKER_CLOUD_ID)
