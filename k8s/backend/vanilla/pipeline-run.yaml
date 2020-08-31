@@ -2,7 +2,10 @@ apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
   generateName: svc-deploy-run-
-  namespace: hybrid-cloud-demo
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+  labels:
+    tekton.dev/pipeline: ksvc-deploy
 spec:
   params:
     - name: APP_NAME
