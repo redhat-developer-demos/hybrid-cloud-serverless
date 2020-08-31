@@ -1,0 +1,33 @@
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: hcdb-github-webhook
+  labels:
+    app: github
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - name: hcdb-github-webhook
+      bindings:
+        - name: hcdb-triggerbinding
+      template:
+        name: backend-ksvc-trigger-template
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: hcdb-github-webhook
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: hcdb-github-webhook
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: "Service"
+    name: el-hcdb-github-webhook
+    weight: 100
+  tls:
+    termination: edge

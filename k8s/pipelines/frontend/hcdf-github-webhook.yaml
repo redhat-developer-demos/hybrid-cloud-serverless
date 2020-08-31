@@ -1,0 +1,33 @@
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: hcdf-github-webhook
+  labels:
+    app: github
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - name: hcdf-github-webhook
+      bindings:
+        - name: hcdf-triggerbinding
+      template:
+        name: frontend-svc-trigger-template
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: hcdf-github-webhook
+  labels:
+    app.kubernetes.io/managed-by: EventListener
+    app.kubernetes.io/part-of: Triggers
+    eventlistener: hcdf-github-webhook
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: "Service"
+    name: el-hcdf-github-webhook
+    weight: 100
+  tls:
+    termination: edge

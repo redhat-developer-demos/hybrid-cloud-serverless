@@ -166,12 +166,11 @@ All clusters where only *backend* service tier will be deployed, run:
 tkn pipeline start ksvc-deploy \
    --serviceaccount hybrid-cloud-demo-sa \
    --param APP_NAME=hybrid-cloud-backend \
-   --param SERVICE=backend \
-   --param KN_MAX_SCALE=1 \
+   --param SERVICE_TIER=backend \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \
    --use-param-defaults \
-   --showlog  
+   --dry-run  
 ----
 
 Setting *KN_MAX_SCALE* for the cluster to be 1, so it can distribute the load across clouds.
@@ -189,10 +188,10 @@ tkn pipeline start svc-deploy \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \
    --use-param-defaults \
-   --showlog  
+   --dry-run 
 ----
 
-NOTE: First deplolyment will take some time as Maven artfiacts need to be downloaded and cached in nexus
+NOTE: First deployment will take some time as Maven artfiacts need to be downloaded and cached in nexus
 
 === Frontend
 
@@ -208,7 +207,7 @@ tkn pipeline start svc-deploy \
    --workspace=name=source,claimName=hybrid-cloud-demo-sources \
    --workspace=name=maven-settings,config=maven-settings \
    --use-param-defaults \
-   --showlog  
+   --dry-run 
 ----
 
 [source,bash,subs="+attributes"]

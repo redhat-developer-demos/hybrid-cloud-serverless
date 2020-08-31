@@ -20,25 +20,7 @@ spec:
     - name: IMAGE_NAME
       description: >-
         The fully qualified image name e.g example.com/tekton-tutorial/helloworld
-      default: image-registry.openshift-image-registry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
-    - name: SERVICE_TIER
-      description: >-
-        The service  for the application allowed values "backend" or "frontend"
-    - name: APP_NAME
-      description: >-
-        The Knative Service Name
-    - name: SERVICE_NAMESPACE
-      description: >-
-        The Knative Service Namespace
-      default: hybrid-cloud-demo
-    - name: KN_CONCURRENCY_LIMIT
-      description: >-
-        The maximum number of concurrent requests to allow per service pod
-      default: "1"
-    - name: KN_MAX_SCALE
-      description: >-
-        The maximum number of pods the service scale upto. Defaults to 0, which means unlimited.
-      default: "0"
+      default: image-registry.openshift-imageregistry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
   workspaces:
     - name: source
     - name: maven-settings
@@ -67,7 +49,7 @@ spec:
         - clone-sources
       params:
         - name: GOALS
-          value: ["-pl", "$(params.SERVICE_TIER)", "-B", "clean", "test"]
+          value: ["-B", "clean", "test"]
       workspaces:
         - name: maven-settings
           workspace: maven-settings
@@ -81,15 +63,7 @@ spec:
         - maven-test
       params:
         - name: GOALS
-          value:
-            [
-              "-pl",
-              "$(params.SERVICE_TIER)",
-              "-B",
-              "-DskipTests",
-              "clean",
-              "package",
-            ]
+          value: ["-B", "-DskipTests", "clean", "package"]
       workspaces:
         - name: maven-settings
           workspace: maven-settings
@@ -114,55 +88,28 @@ spec:
       workspaces:
         - name: source
           workspace: source
-    - name: query-cloud-provider
+    - name: create-pr
       taskRef:
-        name: cloud-identifier
+        name: image-updater
       runAfter:
         - buildah-build-push
-    - name: deploy-kn-service
-      taskRef:
-        name: kn
-        kind: ClusterTask
-      runAfter:
-        - query-cloud-provider
+        # TODO ideally some integration tests should come here
       params:
-        - name: ARGS
-          value:
-            - service
-            - create
-            - $(params.APP_NAME)
-            - --force
-            - --image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
-            - --concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)
-            - --max-scale=$(params.KN_MAX_SCALE)
-            - --label=app.kubernetes.io/part-of=hybrid-cloud-demo
-            - --env=WORKER_CLOUD_ID=$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)
-    - name: skupperize-kn-service
-      runAfter:
-        - deploy-kn-service
-      workspaces:
-        - name: source
-          workspace: source
-      taskRef:
-        name: openshift-cli-deploy
-      params:
-        - name: SCRIPT
-          value: |
-            #!/usr/bin/env bash
-            if ! oc get svc -n "$(params.SERVICE_NAMESPACE)" "$(params.APP_NAME)-skupper";
-            then
-            cat <<-EOF | oc create -n "$(params.SERVICE_NAMESPACE)" -f -
-            apiVersion: v1
-            kind: Service
-            metadata:
-              annotations:
-                skupper.io/proxy: http
-                skupper.io/target: "$(params.APP_NAME).$(params.SERVICE_NAMESPACE)"
-              name: "$(params.APP_NAME)-skupper"
-            spec:
-              ports:
-              - name: http
-                port: 80
-              type: LoadBalancer
-            EOF
-            fi
+        - name: driver
+          value: "github"
+        - name: file-path
+          value: "k8s/knative/service.yaml"
+        - name: image-repo
+          value: $(params.APP_IMAGE_NAME)
+        - name: new-image-url
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)"
+        - name: source-branch
+          value: "knative"
+        - name: source-repo
+          value: gogs/hybrid-cloud
+        - name: update-key
+          value: "spec.template.spec.containers.0.image"
+        - name: insecure
+          value: "true"
+        - name: branch-generate-name
+          value: "ci-"

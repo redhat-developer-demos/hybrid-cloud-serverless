@@ -9,7 +9,6 @@ commonLabels:
   app.kubernetes.io/part-of: hybrid-cloud-demo
 
 resources:
-  - openshift-cli-deploy-task.yaml
-  - ksvc-deploy.yaml
-  - svc-deploy.yaml
-  - image-updater.yaml
+  - backend-ksvc-trigger-template.yaml
+  - hcdb-github-webhook.yaml
+  - backend-github-triggerbindings.yaml

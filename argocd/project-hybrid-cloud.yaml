@@ -1,0 +1,42 @@
+metadata:
+  name: hybrid-cloud
+  namespace: argocd
+spec:
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+    - group: rbac.authorization.k8s.io
+      kind: "*"
+  description: Hybrid Cloud Demo
+  destinations:
+    - namespace: hybrid-cloud-demo
+      server: https://kubernetes.default.svc
+  namespaceResourceWhitelist:
+    - group: serving.knative.dev
+      kind: "*"
+    - group: ""
+      kind: PersistentVolumeClaim
+    - group: ""
+      kind: Namespace
+    - group: tekton.dev
+      kind: "*"
+    - group: triggers.tekton.dev
+      kind: "*"
+    - group: ""
+      kind: Service
+    - group: apps
+      kind: Deployment
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: rbac.authorization.k8s.io
+      kind: "*"
+    - group: ""
+      kind: ServiceAccount
+  orphanedResources:
+    warn: false
+  sourceRepos:
+    - http://github.com/redhat-developer-demos/hybrid-cloud
+    - http://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
+    - http://github.com/redhat-developer-demos/hybrid-cloud-app-backend

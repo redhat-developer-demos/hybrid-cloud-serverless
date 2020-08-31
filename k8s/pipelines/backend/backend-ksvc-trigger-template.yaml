@@ -1,0 +1,39 @@
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: backend-ksvc-trigger-template
+spec:
+  params:
+    - name: gitrevision
+      description: The git revision
+      default: staging
+    - name: gitrepositoryurl
+      description: The git repository url
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: backend-ksvc-deploy-run-
+        annotations:
+          argocd.argoproj.io/hook: PreSync
+        labels:
+          tekton.dev/pipeline: ksvc-deploy
+      spec:
+        params:
+          - name: APP_NAME
+            value: hybrid-cloud-backend
+          - name: GITHUB_REPO_URL
+            value: $(params.gitrepositoryurl)
+          - name: GITHUB_REPO_REVISION
+            value: $(params.gitrevision)
+        pipelineRef:
+          name: ksvc-deploy
+        serviceAccountName: hybrid-cloud-demo-sa
+        workspaces:
+          - name: source
+            persistentVolumeClaim:
+              claimName: hybrid-cloud-demo-sources
+          - configMap:
+              name: maven-settings
+            name: maven-settings

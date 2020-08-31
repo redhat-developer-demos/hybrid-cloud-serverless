@@ -4,5 +4,28 @@ kind: Kustomization
 # Adds namespace to all resources.
 namespace: hybrid-cloud-demo
 
+# Adds hybrid-cloud-demo label to all resources.
+commonLabels:
+  app.kubernetes.io/part-of: hybrid-cloud-demo
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: skupper-site
+    behavior: create
+    literals:
+      - cluster-local="false"
+      - console="true"
+      - console-authentication="openshift"
+      - console-password="bugs"
+      - console-user="bunny"
+      - edge="false"
+      - name=hybrid-cloud-skupper
+      - router-console="true"
+      - service-controller="true"
+      - service-sync="true"
+
 resources:
   - controller.yaml
+  - skupper-site.yaml

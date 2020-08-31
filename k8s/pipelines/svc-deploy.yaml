@@ -4,7 +4,6 @@ metadata:
   name: svc-deploy
   labels:
     pipeline.openshift.io/runtime: java
-    #pipeline.openshift.io/type: knative
 spec:
   description: >-
     The Pipline to build and deploy the Hybrid Cloud Demo Java App https://github.com/redhat-developer-demos/hybrid-cloud as a Kubernetes Service.
@@ -20,10 +19,7 @@ spec:
     - name: IMAGE_NAME
       description: >-
         The fully qualified image name e.g example.com/tekton-tutorial/helloworld
-      default: image-registry.openshift-image-registry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
-    - name: SERVICE_TIER
-      description: >-
-        The service tier for the application allowed values "backend" or "frontend"
+      default: image-registry.openshift-imageregistry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
     - name: APP_NAME
       description: >-
         The Service Name
@@ -31,9 +27,6 @@ spec:
       description: >-
         The Service Namespace
       default: hybrid-cloud-demo
-    - name: BACKEND_SERVICE_URL
-      description: >-
-        The Backend Service URL to use.
   workspaces:
     - name: source
     - name: maven-settings
@@ -62,7 +55,7 @@ spec:
         - clone-sources
       params:
         - name: GOALS
-          value: ["-pl", "$(params.SERVICE_TIER)", "-B", "clean", "test"]
+          value: ["-B", "clean", "test"]
       workspaces:
         - name: maven-settings
           workspace: maven-settings
@@ -76,20 +69,13 @@ spec:
         - maven-test
       params:
         - name: GOALS
-          value:
-            [
-              "-pl",
-              "$(params.SERVICE_TIER)",
-              "-B",
-              "-DskipTests",
-              "clean",
-              "package",
-            ]
+          value: ["-B", "-DskipTests", "clean", "package"]
       workspaces:
         - name: maven-settings
           workspace: maven-settings
         - name: source
           workspace: source
+
     - name: buildah-build-push
       taskRef:
         name: buildah
@@ -109,14 +95,36 @@ spec:
       workspaces:
         - name: source
           workspace: source
-    - name: query-cloud-provider
+
+    - name: create-pr
       taskRef:
-        name: cloud-identifier
+        name: image-updater
       runAfter:
         - buildah-build-push
-    - name: deploy-kubernetes-app
+        # TODO ideally some integration tests should come here
+      params:
+        - name: driver
+          value: "github"
+        - name: file-path
+          value: "k8s/vanilla/deployment.yaml"
+        - name: image-repo
+          value: $(params.APP_IMAGE_NAME)
+        - name: new-image-url
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)"
+        - name: source-branch
+          value: "knative"
+        - name: source-repo
+          value: gogs/hybrid-cloud
+        - name: update-key
+          value: "spec.template.spec.containers.0.image"
+        - name: insecure
+          value: "true"
+        - name: branch-generate-name
+          value: "ci-"
+
+    - name: skupper-site-token
       runAfter:
-        - query-cloud-provider
+        - buildah-build-push
       workspaces:
         - name: source
           workspace: source
@@ -126,32 +134,6 @@ spec:
         - name: SCRIPT
           value: |
             #!/usr/bin/env bash
-
-            # Create the Deployment
-
-            yq w "$(workspaces.source.path)/k8s/$(params.SERVICE_TIER)/deployment.yaml" metadata.name "$(params.APP_NAME)" \
-            | yq w - spec.replicas 0 \
-            | yq w - 'spec.template.spec.containers[0].image' "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)" \
-            | oc apply -n "$(params.SERVICE_NAMESPACE)" -f -
-
-            # Set required environment variables based on the current environment
-            oc set env -n "$(params.SERVICE_NAMESPACE)" deployment/$(params.APP_NAME) \
-              WORKER_CLOUD_ID="$(tasks.query-cloud-provider.results.CLOUD_PROVIDER)" \
-              IO_OPENSHIFT_BOOSTER_MESSAGING_BACKENDSERVICE_MP_REST_URL="$(params.BACKEND_SERVICE_URL)" \
-              IO_OPENSHIFT_BOOSTER_MESSAGING_PRIMENUMBERSERVICE_MP_REST_URL="$(params.BACKEND_SERVICE_URL)"
-
-            oc scale --replicas=1 -n "$(params.SERVICE_NAMESPACE)" deployment/$(params.APP_NAME)           
-
-            # Create the Service 
-            yq w "$(workspaces.source.path)/k8s/$(params.SERVICE_TIER)/service.yaml" metadata.name "$(params.APP_NAME)" \
-            | yq w - spec.selector.app "$(params.APP_NAME)" \
-            | oc apply -n "$(params.SERVICE_NAMESPACE)" -f -
-
-            # Create the Route
-            if ! oc get route edge -n "$(params.SERVICE_NAMESPACE)" "$(params.APP_NAME)" &>/dev/null;
-            then
-              oc create route edge -n "$(params.SERVICE_NAMESPACE)" "$(params.APP_NAME)" --service="$(params.APP_NAME)" --port="http" --insecure-policy="Allow"
-            fi
 
             # if its frontend create the skupper token, ideally we can create from # any site 
             if ! oc get secret -n "$(params.SERVICE_NAMESPACE)" site-token &>/dev/null  && [ "$(params.SERVICE_TIER)" == "frontend" ]
