@@ -9,14 +9,24 @@ spec:
   description: >-
     The Pipline to build and deploy the Hybrid Cloud Demo Java App https://github.com/redhat-developer-demos/hybrid-cloud as Knative Service.
   params:
+    - name: GITHUB_REPO_URL
+      description: >-
+        The GitHub Repo of the Java Application
+      default: https://github.com/redhat-developer-demos/hybrid-cloud
+    - name: GITHUB_REPO_REVISION
+      description: >-
+        The GitHub revision to use
+      default: knative
     - name: IMAGE_NAME
       description: >-
         The fully qualified image name e.g example.com/tekton-tutorial/helloworld
-      default: quay.io/kameshsampath/hybrid-cloud-kn
+      default: image-registry.openshift-image-registry.svc:5000/hybrid-cloud-demo/hybrid-cloud-demo
+    - name: SERVICE_TIER
+      description: >-
+        The service  for the application allowed values "backend" or "frontend"
     - name: APP_NAME
       description: >-
         The Knative Service Name
-      default: hybrid-cloud-backend
     - name: SERVICE_NAMESPACE
       description: >-
         The Knative Service Namespace
@@ -31,7 +41,79 @@ spec:
       default: "0"
   workspaces:
     - name: source
+    - name: maven-settings
   tasks:
+    - name: clone-sources
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.GITHUB_REPO_URL)
+        - name: revision
+          value: $(params.GITHUB_REPO_REVISION)
+        # just to do a fresh clone, as we already have the directory cloned
+        # to reuse it we can exlude this step
+        - name: deleteExisting
+          value: "true"
+      workspaces:
+        - name: output
+          workspace: source
+    - name: maven-test
+      taskRef:
+        name: maven
+        kind: ClusterTask
+      runAfter:
+        - clone-sources
+      params:
+        - name: GOALS
+          value: ["-pl", "$(params.SERVICE_TIER)", "-B", "clean", "test"]
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: source
+    - name: maven-package
+      taskRef:
+        name: maven
+        kind: ClusterTask
+      runAfter:
+        - maven-test
+      params:
+        - name: GOALS
+          value:
+            [
+              "-pl",
+              "$(params.SERVICE_TIER)",
+              "-B",
+              "-DskipTests",
+              "clean",
+              "package",
+            ]
+      workspaces:
+        - name: maven-settings
+          workspace: maven-settings
+        - name: source
+          workspace: source
+    - name: buildah-build-push
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      runAfter:
+        - maven-package
+      params:
+        - name: CONTEXT
+          value: "$(params.SERVICE_TIER)"
+        - name: DOCKERFILE
+          value: "$(params.SERVICE_TIER)/Dockerfile"
+        - name: IMAGE
+          value: "$(params.IMAGE_NAME)-$(params.SERVICE_TIER)"
+        # since pushing to internal registry we skip TLS verify
+        - name: TLSVERIFY
+          value: "false"
+      workspaces:
+        - name: source
+          workspace: source
     - name: query-cloud-provider
       taskRef:
         name: cloud-identifier
@@ -50,7 +132,7 @@ spec:
             - create
             - $(params.APP_NAME)
             - --force
-            - --image=$(params.IMAGE_NAME)
+            - --image=$(params.IMAGE_NAME)-$(params.SERVICE_TIER)@$(tasks.buildah-build-push.results.IMAGE_DIGEST)
             - --concurrency-limit=$(params.KN_CONCURRENCY_LIMIT)
             - --max-scale=$(params.KN_MAX_SCALE)
             - --label=app.kubernetes.io/part-of=hybrid-cloud-demo
