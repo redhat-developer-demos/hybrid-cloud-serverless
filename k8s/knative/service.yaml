@@ -14,6 +14,3 @@ spec:
           readinessProbe:
             httpGet:
               path: /health/ready
-          env:
-            - name: WORKER_CLOUD_ID
-              value: $(WORKER_CLOUD_ID)
