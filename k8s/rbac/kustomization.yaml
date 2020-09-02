@@ -11,5 +11,5 @@ commonLabels:
 resources:
   - hybrid-cloud-demo.yaml
   - skupper-site-controller.yaml
-  - tekton-triggers-admin.yaml
-  - tekton-triggers-admin.yaml
+  # - tekton-triggers-admin.yaml
+  # - tekton-triggers-admin.yaml

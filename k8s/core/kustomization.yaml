@@ -11,13 +11,13 @@ commonLabels:
 generatorOptions:
   disableNameSuffixHash: true
 
-configMapGenerator:
-  - name: maven-settings
-    behavior: create
-    files:
-      - settings.xml
+# configMapGenerator:
+#   - name: maven-settings
+#     behavior: create
+#     files:
+#       - settings.xml
 
 resources:
   - namespace.yaml
-  - pvcs.yaml
-  - nexus.yaml
+  # - pvcs.yaml
+  # - nexus.yaml

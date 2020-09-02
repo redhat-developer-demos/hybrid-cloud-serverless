@@ -28,4 +28,4 @@ configMapGenerator:
 
 resources:
   - controller.yaml
-  - skupper-site.yaml
+  - site-token.yaml
