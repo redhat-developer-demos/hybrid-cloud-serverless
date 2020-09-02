@@ -36,6 +36,9 @@ spec:
   orphanedResources:
     warn: false
   sourceRepos:
-    - http://github.com/redhat-developer-demos/hybrid-cloud
-    - http://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
-    - http://github.com/redhat-developer-demos/hybrid-cloud-app-backend
+    - https://github.com/redhat-developer-demos/hybrid-cloud
+    - http://gogs.192.168.39.197.nip.io/gogs/hybrid-cloud
+    - https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
+    - http://gogs.192.168.39.197.nip.io/gogs/hybrid-cloud-app-frontend
+    - https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
+    - http://gogs.192.168.39.197.nip.io/gogs/hybrid-cloud-app-backend

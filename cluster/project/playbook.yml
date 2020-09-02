@@ -1,8 +1,10 @@
-- name: Serverless with OpenShift Pipelines and Argo CD
-  hosts: localhost
+- name: "Hybrid Cloud Demo::Configure, Setup and Deploy"
+  hosts: all
   connection: local
 
   vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    install_operators: False
     ocp_version: 4.5.6
     download_clients: False
     deploy_serverless: True
@@ -16,10 +18,20 @@
       prefix: user
     argocd_manifests_dir: argocd
 
-  environment:
-    K8S_AUTH_KUBECONFIG: '{{ kubeconfig }}'
+  tasks:
+    - name: Log in (obtain access token)
+      community.kubernetes.k8s_auth:
+        username: admin
+        password: "{{ k8s_admin_password }}"
+      register: k8s_auth_results
 
   roles:
-    - kameshsampath.openshift_app_spices
-
-- import_playbook: add_tasks.yml
+    - role: kameshsampath.openshift_app_spices
+      environment:
+        K8S_AUTH_HOST: '{{ api_server }}'
+        K8S_AUTH_API_KEY: '{{ k8s_auth_results.k8s_auth.api_key }}'    
+      when: install_operators
+    - role: hybrid_cloud_demo
+      environment:
+        K8S_AUTH_HOST: '{{ api_server }}'
+        K8S_AUTH_API_KEY: '{{ k8s_auth_results.k8s_auth.api_key }}'

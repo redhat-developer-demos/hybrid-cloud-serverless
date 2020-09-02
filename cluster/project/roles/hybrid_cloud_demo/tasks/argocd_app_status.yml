@@ -1,0 +1,11 @@
+---
+- name: "Wait Argo CD App::{{argocd_app_name}} to be Sync and Healthy"
+  community.kubernetes.k8s_info:
+    api_version: argoproj.io/v1alpha1
+    kind: Application
+    namespace: "{{ argocd_namespace }}"
+    name: "{{ argocd_app_name }}"
+  register: argocd_app
+  retries: 60
+  delay: 10
+  until: argocd_app.resources[0].status and  argocd_app.resources[0].status.health.status == 'Healthy' and  argocd_app.resources[0].status.sync.status == 'Synced'

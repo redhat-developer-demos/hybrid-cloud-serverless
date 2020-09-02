@@ -1,7 +1,6 @@
 target
 *.class
 token.yaml
-.vscode/
 env/envvars
 env/extravars
 env/extravars.*
@@ -22,4 +21,8 @@ inventory/*
 !cluster/project/playbook.yml
 **/.kube/*
 **/inventory/*
+**/.ansible
+cluster/project/bin/*
+cluster/project/.argocd/*
+!cluster/project/bin/.gitkeep
 !cluster/inventory/hosts/hosts.example

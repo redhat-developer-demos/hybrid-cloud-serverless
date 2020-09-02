@@ -1,0 +1,13 @@
+
+module my-python36 1.0;
+
+require {
+	type container_t;
+	type fusefs_t;
+	class file relabelto;
+}
+
+#============= container_t ==============
+
+#!!!! This avc is allowed in the current policy
+allow container_t fusefs_t:file relabelto;

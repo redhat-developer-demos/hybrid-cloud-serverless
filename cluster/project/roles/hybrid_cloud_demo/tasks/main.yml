@@ -1,0 +1,9 @@
+---
+
+- include_tasks: tektoncd_add_tasks.yml
+  tags:
+    - tektoncd
+
+- include_tasks: argocd_apps.yml
+  tags:
+    - argoccd

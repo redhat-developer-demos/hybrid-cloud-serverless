@@ -1,0 +1,103 @@
+---
+- name: Check if Argo CD CLI exists
+  stat:
+    path: /runner/project/bin/argocd
+  register: argocd_cli
+
+- name: Download Argo CD CLI
+  get_url:
+    url: "https://github.com/argoproj/argo-cd/releases/download/{{ argocd_version }}/argocd-linux-amd64"
+    dest: /runner/project/bin/argocd
+    mode: 0755
+  become: yes
+  when: argocd_cli.stat and not argocd_cli.stat.exists
+
+- name: set argocd cli binary to use
+  set_fact:
+    argocd_bin: /runner/project/bin/argocd
+
+- set_fact:
+    kubeconfig_yaml: "{{ lookup('file',kubeconfig) | from_yaml }}"
+
+# - debug: var=inventory_hostname
+
+- name: Get ArgoCD Server Address(OpenShift)
+  community.kubernetes.k8s_info:
+     kind: Route
+     api_version: route.openshift.io/v1
+     name: argocd-openshift-oauth-server
+     namespace: "{{ argocd_namespace }}"
+  register: argocd_ingress
+
+- name: Get ArgoCD Server(OpenShift)
+  set_fact:
+    argocd_server: "{{ argocd_ingress.resources[0].spec.host }}"
+
+- debug: msg="Using ArgoCD Server {{ argocd_server}}"
+
+- name: Login to ArgoCD Server(OpenShift)
+  command:
+    argv:
+      - "{{ argocd_bin }}"
+      - --insecure
+      - --server={{ argocd_server }}
+      - --username="{{ openshift_user }}"
+      - --password="{{ openshift_user_password }}"
+
+- name: Login to ArgoCD Server(OpenShift)
+  command:
+    argv:
+      - "{{ argocd_bin }}"
+      - --insecure
+      - --server={{ argocd_server }}
+      - --username="{{ openshift_user }}"
+      - --password="{{ openshift_user_password }}"
+
+- name: Add Hybrid Cloud Git Repos 
+  command:
+    argv:
+    - "{{ argocd_bin }}"
+    - repo
+    - add
+    - "{{ item }}"
+    - --type=git
+    - --upsert
+  changed_when: False
+  register: git_repo_create
+  with_items:
+    - "{{ hybrid_cloud_git_repositories }}"
+    
+# - name: Create ArgoCD hybrid-cloud app
+#   command:
+#     argv:
+#     - "{{ argocd_bin }}"
+#     - proj
+#     - create
+#     - --upsert
+#     - -f 
+#     - "argocd/project-hybrid-cloud.yaml"
+#   changed_when: False
+#   register: project_create
+
+# - set_fact:
+#     is_project_created: "{{ project_create and project_create.rc == 0 }}"
+
+# #  - debug: var=project_create
+# #    when: is_project_created
+
+# - name: Create Argo CD App::core
+#   command:
+#     argv:
+#     - "{{ argocd_bin }}"
+#     - app
+#     - create
+#     - --upsert
+#     - -f 
+#     - "argocd/app-core.yaml"
+#   changed_when: False
+#   register: app_core_create
+#   when: is_project_created
+
+# - include_tasks: argocd_app_status.yml
+#   vars:
+#     argocd_app_name: core
