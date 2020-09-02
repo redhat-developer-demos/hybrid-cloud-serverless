@@ -16,9 +16,6 @@
   set_fact:
     argocd_bin: /runner/project/bin/argocd
 
-- set_fact:
-    kubeconfig_yaml: "{{ lookup('file',kubeconfig) | from_yaml }}"
-
 # - debug: var=inventory_hostname
 
 - name: Get ArgoCD Server Address(OpenShift)
@@ -39,19 +36,12 @@
   command:
     argv:
       - "{{ argocd_bin }}"
+      - login
+      - "{{ argocd_server }}"
       - --insecure
-      - --server={{ argocd_server }}
-      - --username="{{ openshift_user }}"
-      - --password="{{ openshift_user_password }}"
-
-- name: Login to ArgoCD Server(OpenShift)
-  command:
-    argv:
-      - "{{ argocd_bin }}"
-      - --insecure
-      - --server={{ argocd_server }}
-      - --username="{{ openshift_user }}"
-      - --password="{{ openshift_user_password }}"
+      - --server="{{ argocd_server }}"
+      - --sso
+   
 
 - name: Add Hybrid Cloud Git Repos 
   command:

@@ -1,7 +1,0 @@
----
-# enable logging while playbook runs, this will supress all logs from the task
-quiet: False
-# Could be one of aws, azr or gcp
-cloud_profile: gcp
-# An OpenShift Cluster Admin user called ocpadmin will be automatically created, the # password that needs to be set for the ocpadmin user
-ocpadmin_password: adminPa55word!

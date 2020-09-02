@@ -6,7 +6,7 @@ ANSIBLE_RUNNER_IMAGE := example/ansible-runner
 
 .PHONY:	build
 build:	
-	@docker build -t example/ansible-runner .
+	@docker build --no-cache -t example/ansible-runner .
 
 .PHONY: run
 run:
