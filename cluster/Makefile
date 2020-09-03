@@ -12,6 +12,7 @@ build:
 run:
 	@docker run -it  \
    -v $(CURRENT_DIR)/project:/runner/project:z \
+   -v $(CURRENT_DIR)/.workshopper:/runner/.workshopper:z \
    -v $(CURRENT_DIR)/project/bin:/runner/project/bin:z \
    -v $(CURRENT_DIR)/project/.argocd:/runner/.argocd:z \
    -v $(CURRENT_DIR)/inventory:/runner/inventory:z \
