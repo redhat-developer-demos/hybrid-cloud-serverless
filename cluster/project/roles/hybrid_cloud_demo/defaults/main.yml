@@ -1,0 +1,28 @@
+---
+argocd_namespace: argocd
+argocd_version: v1.6.2
+
+hybrid_cloud_git_repositories:
+  - https://github.com/redhat-developer-demos/hybrid-cloud
+  - https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
+  - https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
+
+
+# OpenShift Pipelines TP 1.1
+tektoncd_pipelines_version: v0.14.3
+tektoncd_triggers_version: v0.6.1
+
+tasks_dir: /tmp/tektoncd/tasks
+
+cluster_tasks:
+  - name: buildah
+    manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/buildah/0.1/buildah.yaml"
+  - name: maven
+    manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/maven/0.1/maven.yaml"
+  - name: kn
+    manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/kn/0.1/kn.yaml"
+  - name: git-clone
+    manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/git-clone/0.1/git-clone.yaml"
+  - name: openshift-client
+    manifest_url: "https://raw.githubusercontent.com/tektoncd/catalog/master/task/openshift-client/0.1/openshift-client.yaml"
+

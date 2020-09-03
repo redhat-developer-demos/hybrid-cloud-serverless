@@ -1,0 +1,61 @@
+- name: "Hybrid Cloud Demo::Prepare for Play"
+  hosts: all
+  connection: local
+
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    verify_certs: False
+
+  pre_tasks:
+    - name: OpenShift LogIn
+      community.kubernetes.k8s_auth:
+        host: "{{ api_server }}"
+        username: "{{ openshift_admin_user }}"
+        password: "{{ openshift_admin_password }}"
+        validate_certs: "{{ verify_certs }}"
+      register: k8s_auth_results
+    
+    - name: Set OpenShift Auth Key
+      set_fact:
+         k8s_auth_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+
+- name: "Hybrid Cloud Demo::Configure, Setup and Deploy"
+  hosts: all
+  connection: local
+
+  vars:
+    ansible_python_interpreter: '{{ ansible_playbook_python }}'
+    verify_certs: False
+    install_operators: True
+    ocp_version: 4.5.6
+    download_clients: False
+    deploy_serverless: True
+    deploy_pipelines: True
+    deploy_argocd: True
+    argocd_namespace: argocd
+    htpasswdidp_name: workshopper
+    users:
+      create: True
+      start: 0
+      end: 0
+      prefix: user
+    argocd_manifests_dir: argocd
+  
+  environment:
+    - K8S_AUTH_HOST: "{{ api_server }}"
+    - K8S_AUTH_VERIFY_SSL: "{{ verify_certs | default(no) }}"
+    - K8S_AUTH_API_KEY: "{{ k8s_auth_api_key }}"
+
+  roles:
+    - role: kameshsampath.openshift_app_spices
+      when: install_operators
+    - role: hybrid_cloud_demo
+  
+  post_tasks:
+    - name: OpenShift Logout (revoke access token)
+      when: k8s_auth_results.k8s_auth.api_key is defined
+      k8s_auth:
+        state: absent
+        host: "{{ api_server }}"
+        validate_certs: "{{ verify_certs }}"
+        api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

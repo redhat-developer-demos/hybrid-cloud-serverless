@@ -1,0 +1,26 @@
+---
+- name: Create Manifests Dir
+  file:
+    path: "{{ tasks_dir }}"
+    state: directory
+
+- name: Download Task manifests
+  get_url:
+    url: "{{ item.manifest_url }}"
+    dest: "{{ [tasks_dir,item.name] | join('/') }}.yaml"
+    mode: "666"
+  with_items: "{{ cluster_tasks }}"
+
+- name: Convert Task to Cluster Tasks
+  replace:
+    path: "{{ [tasks_dir,item.name] | join('/') }}.yaml"
+    regexp: '(^kind:\s*)Task$'
+    replace: '\1ClusterTask'
+    backup: yes
+  with_items: "{{ cluster_tasks }}"
+
+- name: Deploy Cluster Tasks
+  community.kubernetes.k8s:
+    state: present
+    src: "{{ [tasks_dir,item.name] | join('/') }}.yaml"
+  with_items: "{{ cluster_tasks }}"

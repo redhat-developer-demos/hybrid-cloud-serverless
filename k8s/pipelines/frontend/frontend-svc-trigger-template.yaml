@@ -1,0 +1,40 @@
+---
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: frontend-svc-trigger-template
+spec:
+  params:
+    - name: gitrevision
+      description: The git revision
+      default: staging
+    - name: gitrepositoryurl
+      description: The git repository url
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        generateName: frontend-svc-deploy-run-
+        namespace: hybrid-cloud-demo
+      spec:
+        params:
+          - name: APP_NAME
+            value: hybrid-cloud-frontend
+          - name: BACKEND_SERVICE_URL
+            value: http://hybrid-cloud-backend-skupper:8080
+          - name: SERVICE_NAMESPACE
+            value: hybrid-cloud-demo
+          - name: GITHUB_REPO_URL
+            value: $(params.gitrepositoryurl)
+          - name: GITHUB_REPO_REVISION
+            value: $(params.gitrevision)
+        pipelineRef:
+          name: svc-deploy
+        serviceAccountName: hybrid-cloud-demo-sa
+        workspaces:
+          - name: source
+            persistentVolumeClaim:
+              claimName: hybrid-cloud-demo-sources
+          - configMap:
+              name: maven-settings
+            name: maven-settings

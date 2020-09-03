@@ -1,0 +1,11 @@
+---
+
+# - debug: var=ansible_env.K8S_AUTH_API_KEY
+
+- include_tasks: tektoncd_add_tasks.yml
+  tags:
+    - tektoncd
+
+- include_tasks: argocd_apps.yml
+  tags:
+    - argocd

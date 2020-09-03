@@ -1,0 +1,17 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: openshift-cli-deploy
+spec:
+  description: >-
+    Runs openshift client. The task can use tools like yq/jq for extra processing of the Kubernetes manifests.
+  workspaces:
+    - name: source
+  params:
+    - name: SCRIPT
+      description: The OpenShift script to run
+      default: "oc --help"
+  steps:
+    - name: oc
+      image: quay.io/rhdevelopers/origin-cli-yq-jq
+      script: $(params.SCRIPT)
