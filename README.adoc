@@ -15,8 +15,8 @@ export FRONTEND_HOME=`pwd`/hybrid-cloud-app-frontend
 Lets use the following variables to refer to the source repositories cloned above:
 
 - *$HYBRID_CLOUD_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
-- *$BACKEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
-- *$FRONTEND_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
+- *$BACKEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
+- *$FRONTEND_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
 
 
 == Pre-requsites
