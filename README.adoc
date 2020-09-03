@@ -1,255 +1,219 @@
 = Hybrid Cloud
-:experimental:
-:namespace: hybrid-cloud-demo
-
-image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/backend/badge.svg[]
-image:https://github.com/redhat-developer-demos/hybrid-cloud/workflows/frontend/badge.svg[]
 
 == Download Sources
 
-[source,bash,subs="+attributes"]
+[source,bash]
 ----
-git clone -b knative https://github.com/redhat-developer-demos/hybrid-cloud #<.>
-cd hybrid-cloud
-export REPO_HOME="$PWD"
+git clone https://github.com/redhat-developer-demos/hybrid-cloud
+export HYBRID_CLOUD_HOME=`pwd`/hybrid-cloud
+git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
+export BACKEND_APP_HOME=`pwd`/hybrid-cloud-app-frontend
+git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
+export FRONTEND_HOME=`pwd`/hybrid-cloud-app-frontend
 ----
 
-For rest of the document we will call $REPO_HOME; the folder where you have cloned the https://github.com/redhat-developer-demos/hybrid-cloud.
+Lets use the following variables to refer to the source repositories cloned above:
+
+- *$HYBRID_CLOUD_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
+- *$BACKEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
+- *$FRONTEND_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
+
 
 == Pre-requsites
 
-An OpenShift 4 cluster with following components installed:
+* Three https://try.openshift.com[OpenShift4] cluster with following components installed:
+** OpenShift Serverless
 
-- OpenShift Pipelines
-- OpenShift Serverless
+* https://skupper.io/releases/index.html[skupper]
 
-Copy `$REPO_HOME/env/extravars.example` to `$REPO_HOME/env/extravars`, update it to match your setting. To provision OpenShift Pipelines and OpenShift Serverless run:
+Let us call the OpenShift Clusters as *Cloud-1*, *Cloud-2* and *Cloud-3*.
 
-[source,bash,subs="+attributes"]
+The following table shows the cloud and what components gets installed on each of them:
+
+.Clouds and Components
+[cols="<2,^1,^1,^1", options="header"]
+|===
+| Component | Cloud-1  |  Cloud-2 | Cloud-3
+| Backend   | &#x2713;  | &#x2713;  | &#x2713;
+| Frontend  | &#x2713;  | &#x274C; | &#x274C;
+| Generate Site Token(`token.yaml`)  | &#x2713;  | &#x274C; | &#x274C;
+|===
+
+Before the `backend` or `frontend` applications are deployed, let us prepare the clusters with required resources:
+
+[source,bash]
 ----
-$REPO_HOME provision.sh <pass the kubeconfig file to use>
-----
-IMPORTANT: You need to run this command once against each Cluster with respective `$KUBECONFIG` file absolute path as argument.
-
-=== CLI Tools
-
-- https://github.com/tektoncd/cli[Tekton CLI]
-- https://github.com/skupperproject/skupper/tree/0.3/cmd/skupper[Skupper CLI > 0.3.0]
-
-== Deploy Services
-
-=== Preparing Namespace
-
-The demo will be deployed in the namespace `{namespace}`, the namespace need to be prepared with the following resources:
-
-- The namespace itself need to be created
-- Service Account with right roles needed for Skupper and Kn Service Deployment
-- PeristentVolumeClaims(PVC) *hybrid-cloud-demo-sources* to hold the cloned resources
-- ConfigMap called *maven-settings* to have the maven settings
-- Soantype nexus for faster and quicker builds maven builds
-- Finally the Tektoncd pipeline 
-    - *ksvc-deploy*:  to build and deploy the sources as Knative Service
-    - *svc-deply*:  to build and deploy the sources as normal Kubernetes Service
-
-Create the following essential resources before running the demo pipelines:
-
-Create the Service Account and required Roles and RoleBindings:
-
-[source,bash,attributes]
-----
-oc apply -k $REPO_HOME/k8s/rbac
+cd $HYBRID_CLOUD_HOME
+oc apply -k k8s/core
+oc project hybrid-cloud-demo
+oc apply -k k8s/rbac
+oc apply -k k8s/skupper
 ----
 
-Create Namespace, nexus, persistent volumes:
+Wait for skupper deployments to be ready:
 
-[source,bash,attributes]
+[source,bash]
 ----
-oc apply -k $REPO_HOME/k8s/core
-----
-
-Wait for the nexus deployment to complete:
-
-[source,bash,attributes]
-----
-oc rollout status --watch --timeout=180s deploy nexus
+oc rollout status deployment skupper-site-controller
+oc rollout status deployment skupper-router
+oc rollout status deployment skupper-service-controller
 ----
 
-Create the Pipelines tasks:
+== Backend Deployment
 
-[source,bash,attributes]
-----
-oc apply -k $REPO_HOME/k8s/pipelines
-----
+On all clouds *Cloud-1*, *Cloud-2* and *Cloud-3*, run the following commands to deploy `Knative` backend:
 
-Deploy Skupper Site Controller
+Deploy backend application(Knative):
 
-[source,bash,attributes]
+[source,bash]
 ----
-oc apply -k $REPO_HOME/k8s/skupper
+cd $BACKEND_APP_HOME
+oc apply -k k8s/knative
 ----
 
-[IMPORTANT]
+[NOTE]
 ====
-- Repeat the above command against all the OpenShift Clusters where you are going to deploy the frontend and backend applications
+If you want traditional Kubenretes deployment then use the run the following command:
+[source,bash]
+----
+cd $BACKEND_APP_HOME
+oc apply -k k8s/vanilla
+----
 ====
 
-Shift to the *hybrid-cloud-demo* project:
+Run the following command to check the status:
 
-[source,bash,subs="+attributes"]
+[source,bash]
 ----
-oc project {namespace}
-----
-
-=== Update Cluster Tasks
-
-[source,bash,attributes]
-----
-oc replace \
-  -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/buildah/0.1/buildah.yaml --dry-run=client -oyaml \
-  | yq w - kind ClusterTask \
-  | oc replace -f -
+oc get pods,svc,ksvc
 ----
 
-
-[source,bash,attributes]
-----
-oc replace \
-  -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/maven/0.1/maven.yaml --dry-run=client -oyaml \
-  | yq w - kind ClusterTask \
-  | oc replace -f -
-----
-
-[source,bash,attributes]
-----
-oc replace \
-  -f https://raw.githubusercontent.com/tektoncd/catalog/master/task/kn/0.1/kn.yaml --dry-run=client -oyaml \
-  | yq w - kind ClusterTask \
-  | oc replace -f -
-----
-
-=== Deploy Skupper
-
-To deploy Skupper Router and Controller, run the following command on each of your OpenShift Clusters:
-
-[source,bash,attributes]
-----
-tkn pipeline start skupper-site-deploy \
-   --serviceaccount skupper-site-controller \
-   --param SITE_NAME=backend \
-   --use-param-defaults \
-   --showlog
-----
-
-Verify if Skupper is up and running before proceeeding to next section, you can verify by:
-
-[source,bash,attributes]
-----
-skupper status
-----
-
-
-We are yet to create and connect the clouds(sites), hence you will see an output like:
+A successfull deployments of `core`,`rbac`,`skupper` and `backend` components, should show an output like:
 
 [source,text]
 ----
-Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is not connected to any other sites. It has no exposed services.
+NAME                                                        READY   STATUS    RESTARTS   AGE
+pod/hybrid-cloud-backend-p948k-deployment-b49c9569b-ggv8z   2/2     Running   0          26s
+pod/skupper-router-56c4544bbc-dhckt                         3/3     Running   0          43m
+pod/skupper-service-controller-5bcf486799-v2hl2             2/2     Running   0          43m
+pod/skupper-site-controller-5cf967f858-z2dx8                1/1     Running   0          43m
+
+NAME                                         TYPE           CLUSTER-IP       EXTERNAL-IP                                                  PORT(S)                             AGE
+service/hybrid-cloud-backend                 ExternalName   <none>           kourier-internal.knative-serving-ingress.svc.cluster.local   <none>                              21s
+service/hybrid-cloud-backend-p948k           ClusterIP      172.30.223.229   <none>                                                       80/TCP                              26s
+service/hybrid-cloud-backend-p948k-private   ClusterIP      172.30.140.107   <none>                                                       80/TCP,9090/TCP,9091/TCP,8022/TCP   26s
+service/hybrid-cloud-backend-skupper         LoadBalancer   172.30.1.23      <pending>                                                    80:31554/TCP                        29s
+service/skupper-controller                   ClusterIP      172.30.119.15    <none>                                                       443/TCP                             43m
+service/skupper-internal                     ClusterIP      172.30.205.136   <none>                                                       55671/TCP,45671/TCP                 43m
+service/skupper-messaging                    ClusterIP      172.30.14.214    <none>                                                       5671/TCP                            43m
+service/skupper-router-console               ClusterIP      172.30.72.116    <none>                                                       443/TCP                             43m
+
+NAME                                               URL                                                                 LATESTCREATED                LATESTREADY                  READY   REASON
+service.serving.knative.dev/hybrid-cloud-backend   http://hybrid-cloud-backend-hybrid-cloud-demo.apps.gcp.kameshs.me   hybrid-cloud-backend-p948k   hybrid-cloud-backend-p948k   True
 ----
 
-=== Backend 
+[NOTE]
+====
+When using the vanilla deployment you will not have `ksvc` and `service/hybrid-cloud-backend-skupper` service.
+====
 
-All clusters where only *backend* service tier will be deployed, run:
+== Connecting Clouds
 
-==== Knative
+=== Generate Skupper Connection Token
 
-[source,bash,subs="macros+,+attributes"]
+On *Cloud-1*, create the following Kubenretes Secret:
+
+[source,bash]
 ----
-tkn pipeline start ksvc-deploy \
-   --serviceaccount hybrid-cloud-demo-sa \
-   --param APP_NAME=hybrid-cloud-backend \
-   --param SERVICE_TIER=backend \
-   --workspace=name=source,claimName=hybrid-cloud-demo-sources \
-   --workspace=name=maven-settings,config=maven-settings \
-   --use-param-defaults \
-   --dry-run  
+oc create -n hybrid-cloud -f k8s/skupper/site-token.yaml
 ----
 
-Setting *KN_MAX_SCALE* for the cluster to be 1, so it can distribute the load across clouds.
+The skupper controller will update the secret *site-token* with TLS details that will be used in other clouds *Cloud-2* and *Cloud-3* to connect the clouds using _Virtual Application Network(VAN)_. 
 
-The successfull deployment creates a Skupper HTTP Proxy for the backened called *hybrid-cloud-backend-skupper*. The Frontends should the service *hybrid-cloud-backend-skupper* for connecting with backend API.
+Retrieve the site token from *Cloud-1* using:
 
-==== Vanilla Kubernetes Application
-
-[source,bash,subs="macros+,+attributes"]
+[source,bash]
 ----
-tkn pipeline start svc-deploy \
-   --serviceaccount hybrid-cloud-demo-sa \
-   --param APP_NAME=hybrid-cloud-backend \
-   --param SERVICE_TIER=backend \
-   --workspace=name=source,claimName=hybrid-cloud-demo-sources \
-   --workspace=name=maven-settings,config=maven-settings \
-   --use-param-defaults \
-   --dry-run 
+oc get secret -n hybrid-cloud  site-token -o yaml > $HYBRID_CLOUD_HOME/token.yaml
 ----
 
-NOTE: First deployment will take some time as Maven artfiacts need to be downloaded and cached in nexus
+IMPORTANT: You dont need to run the following commands on the *Cloud-1* as it already has the token.
 
-=== Frontend
+To connect *Cloud-2* and *Cloud-3* with *Cloud-1*, run the following command on *Cloud-2* and *Cloud-3*:
 
-On the cluster where only *frontend* service tier will be deployed, run:
-
-[source,bash,subs="+attributes"]
+[source,bash]
 ----
-tkn pipeline start svc-deploy \
-   --serviceaccount hybrid-cloud-demo-sa \
-   --param APP_NAME=hybrid-cloud-frontend \
-   --param SERVICE_TIER=frontend \
-   --param BACKEND_SERVICE_URL='http://hybrid-cloud-backend-skupper:8080' \
-   --workspace=name=source,claimName=hybrid-cloud-demo-sources \
-   --workspace=name=maven-settings,config=maven-settings \
-   --use-param-defaults \
-   --dry-run 
+oc create -f $HYBRID_CLOUD_HOME/token.yaml
 ----
 
-[source,bash,subs="+attributes"]
+=== Verify Status
+
+==== Cloud-1
+
+Running `skupper status` on the clouds should show the following output:
+
+[source,text]
 ----
-oc get secret -n {namespace} site-token -o yaml > token.yaml
-----
-
-In all clusters than *frontend*, use the connection token created in the previous step and connect the services to create the Virtual Application Network(VAN)
-
-[source,bash,subs="+attributes"]
-----
-oc create -n {namespace} -f token.yaml
-----
-
-Everything is connected and ready to be used.
-
-=== Knative Burst
-
-Open three terminals (one for each cloud ) to watch:
-
-[source,bash,subs="+attributes"]
-----
-watch oc get pods -l=serving.knative.dev/configuration=hybrid-cloud-backend
+Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is connected to 2 other sites. It has 1 exposed service.
 ----
 
-Since all the backen concurrency is set to `1`, trying the following load test will distrbute the Knative load across all the clouds where the backend is deployed:
+==== Cloud-2
 
-[source,bash,subs="+attributes"]
+Running `skupper status` on the clouds should show the following output:
+
+[source,text]
 ----
-hey -z 10s -c 50 \
-  -m POST \
-  -H "Content-Type: application/json" \
-  -d '{"maximumNumber": 10000,"sleepInSeconds": 3, "memoryLoadInMB": 100 }' \
-  https://hybrid-cloud-frontend-hybrid-cloud-demo.apps.gcp.kameshs.dev/api/prime
+Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is connected to 2 other sites (1 indirectly). It has 1 exposed service.
 ----
 
-With that above command you see the distribution of load across all the clouds once the *MAX_SCALE* value exceeds in the closest cloud(site).
+==== Cloud-3
 
+Running `skupper status` on the clouds should show the following output:
 
+[source,text]
+----
+Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is connected to 2 other sites (1 indirectly). It has 1 exposed service.
+----
 
-=== Skupper UI
+[NOTE] 
+====
+Since *Cloud-1* is where we generated the `site-token` secret to connect to other sites, makes it directly connected to other clouds *Cloud-2* and *Cloud-3*. For other clouds you will see one direct to *Cloud-1* and one indirect connection to other cloud.
+====
 
-#TODO#
+=== Verify Exposed Services
 
+You can verify that, in all connected clouds running the following command `skupper list-exposed` shows the following output:
 
+When `Knative` backend was deployed:
+
+[source,bash]
+----
+Services exposed through Skupper:
+    hybrid-cloud-backend-skupper (http port 80) with targets
+      => hybrid-cloud-backend.hybrid-cloud-demo name=hybrid-cloud-backend.hybrid-cloud-demo
+----
+
+When standard Kubernetes (vanilla) backend was deployed:
+
+[source,bash]
+----
+Services exposed through Skupper:
+    hybrid-cloud-backend (http port 80) with targets
+      => hybrid-cloud-backend.hybrid-cloud-demo name=hybrid-cloud-backend.hybrid-cloud-demo
+----
+
+== Frontend Deployment
+
+On *Cloud-1* deploy the *frontend* by running the following command:
+
+[source,bash]
+----
+cd $FRONTEND_APP_HOME
+oc apply -k k8s/knative
+----
+
+Create OpenShift route to access the frontend application
+[source,bash]
+----
+oc create route edge  --service=hybrid-cloud-frontend --port=8080
+----

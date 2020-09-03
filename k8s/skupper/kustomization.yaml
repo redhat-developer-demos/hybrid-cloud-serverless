@@ -28,4 +28,3 @@ configMapGenerator:
 
 resources:
   - controller.yaml
-  - site-token.yaml

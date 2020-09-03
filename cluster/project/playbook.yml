@@ -1,5 +1,5 @@
 - name: "Hybrid Cloud Demo::Prepare for Play"
-  hosts: aws
+  hosts: all
   connection: local
 
   vars:
@@ -20,7 +20,7 @@
          k8s_auth_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
 
 - name: "Hybrid Cloud Demo::Configure, Setup and Deploy"
-  hosts: aws
+  hosts: all
   connection: local
 
   vars:
@@ -33,6 +33,7 @@
     deploy_pipelines: True
     deploy_argocd: True
     argocd_namespace: argocd
+    htpasswdidp_name: workshopper
     users:
       create: True
       start: 0
@@ -56,6 +57,5 @@
       k8s_auth:
         state: absent
         host: "{{ api_server }}"
-        username: "{{ openshift_admin_user }}"
-        password: "{{ openshift_admin_password }}"
+        validate_certs: "{{ verify_certs }}"
         api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"

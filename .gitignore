@@ -26,3 +26,4 @@ cluster/project/bin/*
 cluster/project/.argocd/*
 !cluster/project/bin/.gitkeep
 !cluster/inventory/hosts/hosts.example
+**/*.log
