@@ -15,8 +15,9 @@ artifacts/**
 **/inventory/hostsdocs.old
 **/inventory/hosts.yml
 .cache
-!inventory/README.md
-!inventory/hosts.yaml.example
+!cluster/inventory/hosts
+cluster/inventory/host_vars/*
+!cluster/inventory/host_vars/cloud-vars.example
 !hosts.yaml.example
 !cluster/project/playbook.yml
 **/.kube/*

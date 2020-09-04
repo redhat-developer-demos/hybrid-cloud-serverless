@@ -1,0 +1,28 @@
+# DONT CHANGE THIS
+ansible_host: localhost
+#The OpenShift API Server
+api_server: <OpenShift API SERVER>
+#The OpenShift Admin User to use for installing operators
+openshift_admin_user: <OpenShift Admin User>
+#the OpenShift Admin User password, ma6$shMellow
+openshift_admin_password: <OpenShift Admin User Password>
+#The OpenShift Cloud Profile azr, aws, gcp or ibm
+cloud_profile: <Cloud Profile> 
+#If creating extra admin user the password to use
+ocpadmin_password: adminPa55word!
+#If creating extra users,the user default password
+user_password: pa55word!
+#####################
+### Hybrid Cloud Application Configuration
+#####################
+#type of backend application knative or vanilla
+backend_type: knative
+#The application components that cloud will be tagged to
+#backend and frontend:
+#tiers: ["frontend","backend]
+#only backend:
+#tiers: ["backend"]
+tiers: ["backend"]
+#The Cloud where Skupper Site token will be created
+#possible values yes or no
+create_site_token: no
