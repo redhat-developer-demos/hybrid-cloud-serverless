@@ -8,6 +8,15 @@ namespace: hybrid-cloud-demo
 commonLabels:
   app.kubernetes.io/part-of: hybrid-cloud-demo
 
+generatorOptions:
+  disableNameSuffixHash: true
+
+configMapGenerator:
+  - name: maven-settings
+    behavior: create
+    files:
+      - settings.xml
+
 resources:
   - nexus.yaml
   - pvcs.yaml
