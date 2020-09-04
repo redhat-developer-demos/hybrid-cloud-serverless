@@ -1,6 +1,6 @@
 ---
 - name: Add Privileges to Argocd Controller Service Account
-  community.kubernetes.k8s_info:
+  community.kubernetes.k8s:
     state: present
     namespace: "{{ argocd_namespace }}"
     definition: |-
@@ -63,3 +63,71 @@
 - include_tasks: argocd_app_status.yml
   vars:
     argocd_app_name: hybrid-cloud-core
+
+- name: Create ArgoCD App::RBAC
+  community.kubernetes.k8s:
+    state: present
+    namespace: "{{ argocd_namespace }}"
+    definition: "{{ item | from_yaml }}"
+    wait: yes
+  with_file:
+    - argocd/app_rbac.yaml
+ 
+- include_tasks: argocd_app_status.yml
+  vars:
+    argocd_app_name: hybrid-cloud-rbac
+
+- name: Create ArgoCD App::Skupper
+  community.kubernetes.k8s:
+    state: present
+    namespace: "{{ argocd_namespace }}"
+    definition: "{{ item | from_yaml }}"
+    wait: yes
+  with_file:
+    - argocd/app_skupper.yaml
+ 
+- include_tasks: argocd_app_status.yml
+  vars:
+    argocd_app_name: hybrid-cloud-rbac
+
+- name: Create ArgoCD App::Backend
+  community.kubernetes.k8s:
+    state: present
+    namespace: "{{ argocd_namespace }}"
+    definition: "{{ item | from_yaml }}"
+    wait: yes
+  when: "'backend' in tiers"
+  with_file:
+    - "argocd/app_{{ backend_type|lower }}_backend.yaml"
+ 
+- include_tasks: argocd_app_status.yml
+  vars:
+    argocd_app_name: "hybrid-cloud-backend-{{ backend_type|lower }}"
+
+- name: Create ArgoCD App::Frontend
+  community.kubernetes.k8s:
+    state: present
+    namespace: "{{ argocd_namespace }}"
+    definition: "{{ item | from_yaml }}"
+    wait: yes
+  when: "'frontend' in tiers"
+  with_file:
+    - "argocd/app_{{ backend_type|lower }}_frontend.yaml"
+ 
+- include_tasks: argocd_app_status.yml
+  vars:
+    argocd_app_name: "hybrid-cloud-frontend-{{ backend_type|lower }}"
+
+- name: Create ArgoCD App::Skupper VAN
+  community.kubernetes.k8s:
+    state: present
+    namespace: "{{ argocd_namespace }}"
+    definition: "{{ item | from_yaml }}"
+    wait: yes
+  when: create_site_token | bool
+  with_file:
+    - "argocd/app_van.yaml"
+ 
+- include_tasks: argocd_app_status.yml
+  vars:
+    argocd_app_name: "hybrid-cloud-van"

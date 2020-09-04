@@ -9,3 +9,5 @@
 - include_tasks: argocd_apps.yml
   tags:
     - argocd
+
+# TODO #5 retrieve token from cloud-1 and create in all other clouds

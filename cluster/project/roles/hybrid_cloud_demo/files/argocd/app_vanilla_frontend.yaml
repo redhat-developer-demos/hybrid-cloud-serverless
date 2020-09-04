@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: frontend
+  name: hybrid-cloud-frontend-vanilla
 spec:
   destination:
     namespace: hybrid-cloud-demo
     server: "https://kubernetes.default.svc"
   source:
     path: k8s/vanilla
-    repoURL: "http://github.com/redhat-developer-demos/hybrid-cloud-app-frontend"
+    repoURL: "https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend"
     targetRevision: master
   project: hybrid-cloud
   syncPolicy:

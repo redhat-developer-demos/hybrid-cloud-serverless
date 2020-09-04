@@ -9,7 +9,7 @@ spec:
   source:
     path: k8s/core
     repoURL: "https://github.com/redhat-developer-demos/hybrid-cloud"
-    targetRevision: knative
+    targetRevision: master
   project: hybrid-cloud
   syncPolicy:
     automated:

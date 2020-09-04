@@ -1,15 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: rbac
+  name: hybrid-cloud-rbac
 spec:
   destination:
     namespace: hybrid-cloud-demo
     server: "https://kubernetes.default.svc"
   source:
     path: k8s/rbac
-    repoURL: "http://github.com/redhat-developer-demos/hybrid-cloud"
-    targetRevision: knative
+    repoURL: "https://github.com/redhat-developer-demos/hybrid-cloud"
+    targetRevision: master
   project: hybrid-cloud
   syncPolicy:
     automated:

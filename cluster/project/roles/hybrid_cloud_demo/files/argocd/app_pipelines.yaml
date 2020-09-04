@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: pipelines
+  name: hybrid-cloud-pipelines
 spec:
   destination:
     namespace: hybrid-cloud-demo
@@ -9,7 +9,7 @@ spec:
   source:
     path: k8s/pipelines
     repoURL: "http://github.com/redhat-developer-demos/hybrid-cloud"
-    targetRevision: knative
+    targetRevision: master
   project: hybrid-cloud
   syncPolicy:
     automated:

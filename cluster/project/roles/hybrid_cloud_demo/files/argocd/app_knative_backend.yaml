@@ -1,14 +1,14 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: backend-knative
+  name: hybrid-cloud-backend-knative
 spec:
   destination:
     namespace: hybrid-cloud-demo
     server: "https://kubernetes.default.svc"
   source:
     path: k8s/knative
-    repoURL: "http://github.com/redhat-developer-demos/hybrid-cloud-app-backend"
+    repoURL: "https://github.com/redhat-developer-demos/hybrid-cloud"
     targetRevision: master
   project: hybrid-cloud
   syncPolicy:
