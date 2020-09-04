@@ -8,7 +8,7 @@ spec:
     server: "https://kubernetes.default.svc"
   source:
     path: k8s/vanilla
-    repoURL: "https://github.com/redhat-developer-demos/hybrid-cloud"
+    repoURL: "https://github.com/redhat-developer-demos/hybrid-cloud-app-backend"
     targetRevision: master
   project: hybrid-cloud
   syncPolicy:
