@@ -3,8 +3,10 @@ ansible_host: localhost
 #The OpenShift API Server
 api_server: <OpenShift API SERVER>
 #The OpenShift Admin User to use for installing operators
+# When doing for first time usually kubeadmin
 openshift_admin_user: <OpenShift Admin User>
-#the OpenShift Admin User password, ma6$shMellow
+#The OpenShift Admin User password, when doing for first time 
+#this is usually kubeadmin password
 openshift_admin_password: <OpenShift Admin User Password>
 #The OpenShift Cloud Profile azr, aws, gcp or ibm
 cloud_profile: <Cloud Profile> 
