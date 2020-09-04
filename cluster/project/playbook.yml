@@ -59,7 +59,7 @@
     argocd_cr_name: argocd-openshift-oauth
     htpasswdidp_name: workshopper
     users:
-      create: False
+      create: True
       start: 0
       end: 0
       prefix: user

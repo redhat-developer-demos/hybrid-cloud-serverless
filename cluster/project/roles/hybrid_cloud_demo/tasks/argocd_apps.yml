@@ -39,6 +39,8 @@
     wait: yes
   with_file:
     - argocd/app_repositories.yaml
+  loop_control:
+    label: "hybrid-cloud-repositories"
 
 - name: ArgoCD::Create hybrid-cloud project
   community.kubernetes.k8s:
@@ -49,7 +51,7 @@
   with_file:
     - argocd/project_hybrid_cloud.yaml
   loop_control:
-    label: argocd/project_hybrid_cloud.yaml
+    label: "project-hybrid-cloud"
 
 - name: Create ArgoCD App::core
   community.kubernetes.k8s:
@@ -59,7 +61,9 @@
     wait: yes
   with_file:
     - argocd/app_core.yaml
- 
+  loop_control:
+    label: "hybrid-cloud-core"
+
 - include_tasks: argocd_app_status.yml
   vars:
     argocd_app_name: hybrid-cloud-core
@@ -72,7 +76,9 @@
     wait: yes
   with_file:
     - argocd/app_rbac.yaml
- 
+  loop_control:
+    label: "hybrid-cloud-rbac"
+
 - include_tasks: argocd_app_status.yml
   vars:
     argocd_app_name: hybrid-cloud-rbac
@@ -85,6 +91,8 @@
     wait: yes
   with_file:
     - argocd/app_skupper.yaml
+  loop_control:
+    label: "hybrid-cloud-skupper"
  
 - include_tasks: argocd_app_status.yml
   vars:
@@ -99,7 +107,9 @@
   when: "'backend' in tiers"
   with_file:
     - "argocd/app_{{ backend_type|lower }}_backend.yaml"
- 
+  loop_control:
+    label: "hybrid-cloud-{{ backend_type|lower }}-backend"
+
 - include_tasks: argocd_app_status.yml
   vars:
     argocd_app_name: "hybrid-cloud-backend-{{ backend_type|lower }}"
@@ -113,10 +123,13 @@
   when: "'frontend' in tiers"
   with_file:
     - "argocd/app_{{ backend_type|lower }}_frontend.yaml"
- 
+  loop_control:
+    label: "hybrid-cloud-{{ backend_type|lower }}-frontend"
+
 - include_tasks: argocd_app_status.yml
   vars:
     argocd_app_name: "hybrid-cloud-frontend-{{ backend_type|lower }}"
+  when: "'frontend' in tiers"
 
 - name: Create ArgoCD App::Skupper VAN
   community.kubernetes.k8s:
@@ -127,7 +140,10 @@
   when: create_site_token | bool
   with_file:
     - "argocd/app_van.yaml"
- 
+  loop_control:
+    label: "hybrid-cloud-van"
+
 - include_tasks: argocd_app_status.yml
   vars:
     argocd_app_name: "hybrid-cloud-van"
+  when: create_site_token | bool
