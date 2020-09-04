@@ -1,1 +1,1 @@
---skip-tags argocd
+--skip-tags tektoncd
