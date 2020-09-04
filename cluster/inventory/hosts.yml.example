@@ -28,8 +28,8 @@ all:
         create_site_token: no        
       # AWS Cloud - use the keys as above and update the values corresponding
       # to the cloud
-      aws: {}
+      # aws: {}
       # Azure Cloud
-      azr: {}
+      # azr: {}
       # IBM Cloud
-      ibm: {}
+      # ibm: {}
