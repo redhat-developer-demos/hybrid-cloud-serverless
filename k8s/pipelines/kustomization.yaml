@@ -9,6 +9,8 @@ commonLabels:
   app.kubernetes.io/part-of: hybrid-cloud-demo
 
 resources:
+  - nexus.yaml
+  - pvcs.yaml
   - openshift-cli-deploy-task.yaml
   - ksvc-deploy.yaml
   - svc-deploy.yaml

@@ -19,5 +19,3 @@ configMapGenerator:
 
 resources:
   - namespace.yaml
-  - pvcs.yaml
-  - nexus.yaml
