@@ -7,22 +7,22 @@
 git clone https://github.com/redhat-developer-demos/hybrid-cloud
 export HYBRID_CLOUD_HOME=`pwd`/hybrid-cloud
 git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
-export BACKEND_APP_HOME=`pwd`/hybrid-cloud-app-frontend
+export BACKEND_APP_HOME=`pwd`/hybrid-cloud-app-backend
 git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
-export FRONTEND_HOME=`pwd`/hybrid-cloud-app-frontend
+export FRONTEND_APP_HOME=`pwd`/hybrid-cloud-app-frontend
 ----
 
 Lets use the following variables to refer to the source repositories cloned above:
 
 - *$HYBRID_CLOUD_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
 - *$BACKEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
-- *$FRONTEND_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
+- *$FRONTEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
 
 
-== Pre-requsites
+== Prerequisites
 
 * Three https://try.openshift.com[OpenShift4] cluster with following components installed:
-** OpenShift Serverless
+** https://www.openshift.com/learn/topics/serverless[OpenShift Serverless]
 
 * https://skupper.io/releases/index.html[skupper]
 
@@ -39,7 +39,7 @@ The following table shows the cloud and what components gets installed on each o
 | Generate Site Token(`token.yaml`)  | &#x2713;  | &#x274C; | &#x274C;
 |===
 
-Before the `backend` or `frontend` applications are deployed, let us prepare the clusters with required resources:
+Before the `backend` or `frontend` applications are deployed, execute the following on *each cloud*:
 
 [source,bash]
 ----
@@ -88,7 +88,7 @@ Run the following command to check the status:
 oc get pods,svc,ksvc
 ----
 
-A successfull deployments of `core`,`rbac`,`skupper` and `backend` components, should show an output like:
+A successful deployments of `core`,`rbac`,`skupper` and `backend` components, should show an output like:
 
 [source,text]
 ----
@@ -125,7 +125,7 @@ On *Cloud-1*, create the following Kubenretes Secret:
 
 [source,bash]
 ----
-oc create -n hybrid-cloud -f k8s/skupper/site-token.yaml
+oc create -n hybrid-cloud -f k8s/van/site-token.yaml
 ----
 
 The skupper controller will update the secret *site-token* with TLS details that will be used in other clouds *Cloud-2* and *Cloud-3* to connect the clouds using _Virtual Application Network(VAN)_. 
@@ -137,7 +137,7 @@ Retrieve the site token from *Cloud-1* using:
 oc get secret -n hybrid-cloud  site-token -o yaml > $HYBRID_CLOUD_HOME/token.yaml
 ----
 
-IMPORTANT: You dont need to run the following commands on the *Cloud-1* as it already has the token.
+IMPORTANT: You don't need to run the following commands on the *Cloud-1* as it already has the token.
 
 To connect *Cloud-2* and *Cloud-3* with *Cloud-1*, run the following command on *Cloud-2* and *Cloud-3*:
 
