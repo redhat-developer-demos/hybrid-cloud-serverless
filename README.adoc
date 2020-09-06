@@ -125,7 +125,8 @@ On *Cloud-1*, create the following Kubenretes Secret:
 
 [source,bash]
 ----
-oc create -n hybrid-cloud -f k8s/van/site-token.yaml
+cd $HYBRID_CLOUD_HOME
+oc create -n hybrid-cloud-demo -f k8s/van/site-token.yaml
 ----
 
 The skupper controller will update the secret *site-token* with TLS details that will be used in other clouds *Cloud-2* and *Cloud-3* to connect the clouds using _Virtual Application Network(VAN)_. 
@@ -134,7 +135,7 @@ Retrieve the site token from *Cloud-1* using:
 
 [source,bash]
 ----
-oc get secret -n hybrid-cloud  site-token -o yaml > $HYBRID_CLOUD_HOME/token.yaml
+oc get secret -n hybrid-cloud-demo  site-token -o yaml > $HYBRID_CLOUD_HOME/token.yaml
 ----
 
 IMPORTANT: You don't need to run the following commands on the *Cloud-1* as it already has the token.
@@ -215,5 +216,11 @@ oc apply -k k8s/knative
 Create OpenShift route to access the frontend application
 [source,bash]
 ----
-oc create route edge  --service=hybrid-cloud-frontend --port=8080
+oc create route edge -n hybrid-cloud-demo --service=hybrid-cloud-frontend --port=8080 --insecure-policy=Redirect
+----
+
+Navigate to the exposed route
+[source,bash]
+----
+echo https://$(oc get route -n hybrid-cloud-demo hybrid-cloud-frontend -o jsonpath='{ .spec.host }')
 ----
