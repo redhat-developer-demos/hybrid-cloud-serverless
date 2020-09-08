@@ -25,4 +25,5 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: SKUPPER_SERVICE_CONTROLLER_IMAGE
-              value: quay.io/skupper/service-controller:0.3
+              #value: quay.io/skupper/service-controller:0.3
+              value: quay.io/gordons/service-controller:0.3.2
