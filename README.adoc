@@ -34,10 +34,13 @@ The following table shows the cloud and what components gets installed on each o
 [cols="<2,^1,^1,^1", options="header"]
 |===
 | Component | Cloud-1  |  Cloud-2 | Cloud-3
+| Cloud Provider  | gcp  |  aws | azr
 | Backend   | &#x2713;  | &#x2713;  | &#x2713;
 | Frontend  | &#x2713;  | &#x274C; | &#x274C;
 | Generate Site Token(`token.yaml`)  | &#x2713;  | &#x274C; | &#x274C;
 |===
+
+NOTE: You can use any cloud provider for any OpenShift4 supported cloud, the gcp/aws/azr is used in this example.
 
 Before the `backend` or `frontend` applications are deployed, execute the following on *each cloud*:
 
@@ -47,10 +50,60 @@ cd $HYBRID_CLOUD_HOME
 oc apply -k k8s/core
 oc project hybrid-cloud-demo
 oc apply -k k8s/rbac
-oc apply -k k8s/skupper
 ----
 
-Wait for skupper deployments to be ready:
+=== Cloud-1(gcp)
+
+=== Add Image Streams
+
+[source,bash]
+----
+oc import-image hybrid-cloud-backend --confirm --all --from quay.io/rhdevelopers/hybrid-cloud-demo-backend
+# set local lookup policy
+oc set image-lookup hybrid-cloud-backend
+oc import-image hybrid-cloud-frontend --confirm --all --from quay.io/rhdevelopers/hybrid-cloud-demo-frontend
+# set local lookup policy
+oc set image-lookup hybrid-cloud-frontend
+----
+
+[source,bash]
+----
+oc apply -k k8s/skupper/gcp
+----
+
+=== Cloud-2(aws)
+
+=== Add Image Streams
+
+[source,bash]
+----
+oc import-image hybrid-cloud-backend --confirm --all --from quay.io/rhdevelopers/hybrid-cloud-demo-backend
+# set local lookup policy
+oc set image-lookup hybrid-cloud-backend
+----
+
+[source,bash]
+----
+oc apply -k k8s/skupper/aws
+----
+
+=== Cloud-3(azr)
+
+=== Add Image Streams
+
+[source,bash]
+----
+oc import-image hybrid-cloud-backend --confirm --all --from quay.io/rhdevelopers/hybrid-cloud-demo-backend
+# set local lookup policy
+oc set image-lookup hybrid-cloud-backend
+----
+
+[source,bash]
+----
+oc apply -k k8s/skupper/azr
+----
+
+Run the following commands on *Cloud-1*, *Cloud-2* and *Cloud-3* to wait for skupper deployments to be ready:
 
 [source,bash]
 ----
@@ -125,25 +178,30 @@ On *Cloud-1*, create the following Kubenretes Secret:
 
 [source,bash]
 ----
-oc create -n hybrid-cloud -f k8s/van/site-token.yaml
+skupper connection-token $HYBRID_CLOUD_HOME/token.yaml
 ----
 
-The skupper controller will update the secret *site-token* with TLS details that will be used in other clouds *Cloud-2* and *Cloud-3* to connect the clouds using _Virtual Application Network(VAN)_. 
+The `token.yaml` will be used in other clouds *Cloud-2* and *Cloud-3* to connect the clouds using _Virtual Application Network(VAN)_. 
 
-Retrieve the site token from *Cloud-1* using:
-
-[source,bash]
-----
-oc get secret -n hybrid-cloud  site-token -o yaml > $HYBRID_CLOUD_HOME/token.yaml
-----
-
-IMPORTANT: You don't need to run the following commands on the *Cloud-1* as it already has the token.
 
 To connect *Cloud-2* and *Cloud-3* with *Cloud-1*, run the following command on *Cloud-2* and *Cloud-3*:
 
+==== Cloud-2
+
+Make sure the *Cloud-2* starts to spill over after *4* requests in queue:
+
 [source,bash]
 ----
-oc create -f $HYBRID_CLOUD_HOME/token.yaml
+skupper connect --connection-name=cloud-1 --cost 4 $HYBRID_CLOUD_HOME/token.yaml
+----
+
+==== Cloud-3
+
+Make sure the *Cloud-3* starts to spill over after *2* requests in queue:
+
+[source,bash]
+----
+skupper connect --connection-name=cloud-1 --cost 2 $HYBRID_CLOUD_HOME/token.yaml
 ----
 
 === Verify Status

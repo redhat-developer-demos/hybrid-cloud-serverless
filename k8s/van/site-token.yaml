@@ -4,4 +4,6 @@ kind: Secret
 metadata:
   labels:
     skupper.io/type: connection-token-request
+    # only allow 5 outstanding requests, before spillover
+    skupper.io/cost: "5"
   name: site-token

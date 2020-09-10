@@ -20,7 +20,7 @@
 #         msg: "Test over"
 
 - name: "Hybrid Cloud Demo::Prepare for Play"
-  hosts: azr
+  hosts: all
   connection: local
 
   vars:
@@ -41,13 +41,13 @@
          k8s_auth_api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
 
 - name: "Hybrid Cloud Demo::Configure, Setup and Deploy"
-  hosts: azr
+  hosts: all
   connection: local
 
   vars:
     ansible_python_interpreter: '{{ ansible_playbook_python }}'
     verify_certs: False
-    install_operators: False
+    install_operators: True
     ocp_version: 4.5.6
     download_clients: False
     deploy_serverless: True
@@ -57,7 +57,7 @@
     argocd_manifests_dir: argocd
     # The name of the Argo CD CR - default from kameshsampath.openshift_app_spices is argocd-openshift-oauth
     argocd_cr_name: argocd-openshift-oauth
-    htpasswdidp_name: workshopper
+    htpasswdidp_name: htpasswdidp
     users:
       create: True
       start: 0
