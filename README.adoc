@@ -26,6 +26,8 @@ Lets use the following variables to refer to the source repositories cloned abov
 
 * https://skupper.io/releases/index.html[skupper]
 
+* https://mikefarah.gitbook.io/yq/[yq]
+
 Let us call the OpenShift Clusters as *Cloud-1*, *Cloud-2* and *Cloud-3*.
 
 The following table shows the cloud and what components gets installed on each of them:
@@ -52,7 +54,7 @@ oc project hybrid-cloud-demo
 oc apply -k k8s/rbac
 ----
 
-=== Cloud-1(gcp)
+=== Cloud-1
 
 === Add Image Streams
 
@@ -71,7 +73,7 @@ oc set image-lookup hybrid-cloud-frontend
 oc apply -k k8s/skupper/gcp
 ----
 
-=== Cloud-2(aws)
+=== Cloud-2
 
 === Add Image Streams
 
@@ -87,7 +89,7 @@ oc set image-lookup hybrid-cloud-backend
 oc apply -k k8s/skupper/aws
 ----
 
-=== Cloud-3(azr)
+=== Cloud-3
 
 === Add Image Streams
 
@@ -162,7 +164,7 @@ service/skupper-messaging                    ClusterIP      172.30.14.214    <no
 service/skupper-router-console               ClusterIP      172.30.72.116    <none>                                                       443/TCP                             43m
 
 NAME                                               URL                                                                 LATESTCREATED                LATESTREADY                  READY   REASON
-service.serving.knative.dev/hybrid-cloud-backend   http://hybrid-cloud-backend-hybrid-cloud-demo.apps.gcp.kameshs.me   hybrid-cloud-backend-p948k   hybrid-cloud-backend-p948k   True
+service.serving.knative.dev/hybrid-cloud-backend    http://hybrid-cloud-backend.hybrid-cloud-demo.svc.cluster.local   hybrid-cloud-backend-p948k   hybrid-cloud-backend-p948k   True
 ----
 
 [NOTE]
@@ -172,41 +174,114 @@ When using the vanilla deployment you will not have `ksvc` and `service/hybrid-c
 
 == Connecting Clouds
 
-=== Generate Skupper Connection Token
-
-On *Cloud-1*, create the following Kubenretes Secret:
+On *Cloud-1*, run the following command to create `site-token` secret:
 
 [source,bash]
 ----
-skupper connection-token $HYBRID_CLOUD_HOME/token.yaml
+oc apply -k k8s/van
 ----
 
-The `token.yaml` will be used in other clouds *Cloud-2* and *Cloud-3* to connect the clouds using _Virtual Application Network(VAN)_. 
+The `site-token` seceret will be used to connect clouds *Cloud-2* and *Cloud-3* to *Cloud-1* forming a _Virtual Application Network(VAN)_. 
 
+Run the following command to export the `site-token` secret:
+
+[source,bash]
+----
+oc get secret -n hybrid-cloud-demo site-token -o yaml > $HYBRID_CLOUD_HOME/token.yaml
+----
 
 To connect *Cloud-2* and *Cloud-3* with *Cloud-1*, run the following command on *Cloud-2* and *Cloud-3*:
 
-==== Cloud-2
+=== Cloud-2
 
 Make sure the *Cloud-2* starts to spill over after *4* requests in queue:
 
 [source,bash]
 ----
-skupper connect --connection-name=cloud-1 --cost 4 $HYBRID_CLOUD_HOME/token.yaml
+yq w $HYBRID_CLOUD_HOME/token.yaml 'metadata.annotations[skupper.io/cost]' --tag '!!str' 4 | oc create -n hybrid-cloud-demo -f -
 ----
 
-==== Cloud-3
+=== Cloud-3
 
 Make sure the *Cloud-3* starts to spill over after *2* requests in queue:
 
 [source,bash]
 ----
-skupper connect --connection-name=cloud-1 --cost 2 $HYBRID_CLOUD_HOME/token.yaml
+yq w $HYBRID_CLOUD_HOME/token.yaml 'metadata.annotations[skupper.io/cost]' --tag '!!str' 2 | oc create -n hybrid-cloud-demo -f -
 ----
 
-=== Verify Status
+A successfull connection can be verified using the following commands, on *Cloud-1*:
 
-==== Cloud-1
+[source,bash]
+----
+export SKUPPER_POD=$(SKUPPER_POD (oc get pods --selector=application=skupper-router -ojsonpath='{.items[0].metadata.name}'))
+kubectl exec -it $SKUPPER_POD -- qdmanage query --type node
+----
+
+The command should show an output as shown below:
+
+[source,json]
+----
+[
+  {
+    "index": 0, 
+    "nextHop": "(self)", 
+    "name": "router.node/hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd", 
+    "validOrigins": [], 
+    "linkState": [
+      "hybrid-cloud-azr-skupper-router-675cb597fc-75g2x", 
+      "hybrid-cloud-aws-skupper-router-5946d4544f-mgswf"
+    ], 
+    "instance": 1599839762, 
+    "identity": "router.node/hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd", 
+    "protocolVersion": 1, 
+    "lastTopoChange": 1599840055, 
+    "type": "org.apache.qpid.dispatch.router.node", 
+    "id": "hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd", 
+    "address": "amqp:/_topo/0/hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd"
+  }, 
+  {
+    "routerLink": 0, 
+    "name": "router.node/hybrid-cloud-aws-skupper-router-5946d4544f-mgswf", 
+    "index": 1, 
+    "validOrigins": [
+      "hybrid-cloud-azr-skupper-router-675cb597fc-75g2x"
+    ], 
+    "protocolVersion": 1, 
+    "linkState": [
+      "hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd"
+    ], 
+    "instance": 1599840049, 
+    "cost": 4, 
+    "address": "amqp:/_topo/0/hybrid-cloud-aws-skupper-router-5946d4544f-mgswf", 
+    "type": "org.apache.qpid.dispatch.router.node", 
+    "id": "hybrid-cloud-aws-skupper-router-5946d4544f-mgswf", 
+    "identity": "router.node/hybrid-cloud-aws-skupper-router-5946d4544f-mgswf"
+  }, 
+  {
+    "routerLink": 1, 
+    "name": "router.node/hybrid-cloud-azr-skupper-router-675cb597fc-75g2x", 
+    "index": 2, 
+    "validOrigins": [
+      "hybrid-cloud-aws-skupper-router-5946d4544f-mgswf"
+    ], 
+    "protocolVersion": 1, 
+    "linkState": [
+      "hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd"
+    ], 
+    "instance": 1599840051, 
+    "cost": 2, 
+    "address": "amqp:/_topo/0/hybrid-cloud-azr-skupper-router-675cb597fc-75g2x", 
+    "type": "org.apache.qpid.dispatch.router.node", 
+    "id": "hybrid-cloud-azr-skupper-router-675cb597fc-75g2x", 
+    "identity": "router.node/hybrid-cloud-azr-skupper-router-675cb597fc-75g2x"
+  }
+]
+----
+
+== Verify Status
+
+=== Cloud-1
 
 Running `skupper status` on the clouds should show the following output:
 
@@ -215,7 +290,7 @@ Running `skupper status` on the clouds should show the following output:
 Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is connected to 2 other sites. It has 1 exposed service.
 ----
 
-==== Cloud-2
+=== Cloud-2
 
 Running `skupper status` on the clouds should show the following output:
 
@@ -224,7 +299,7 @@ Running `skupper status` on the clouds should show the following output:
 Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is connected to 2 other sites (1 indirectly). It has 1 exposed service.
 ----
 
-==== Cloud-3
+=== Cloud-3
 
 Running `skupper status` on the clouds should show the following output:
 
@@ -238,9 +313,9 @@ Skupper is enabled for namespace '"hybrid-cloud-demo" in interior mode'. It is c
 Since *Cloud-1* is where we generated the `site-token` secret to connect to other sites, makes it directly connected to other clouds *Cloud-2* and *Cloud-3*. For other clouds you will see one direct to *Cloud-1* and one indirect connection to other cloud.
 ====
 
-=== Verify Exposed Services
+== Verify Exposed Services
 
-You can verify that, in all connected clouds running the following command `skupper list-exposed` shows the following output:
+You can verify that, in *all* connected clouds running the following command `skupper list-exposed` shows the following output:
 
 When `Knative` backend was deployed:
 
@@ -270,8 +345,9 @@ cd $FRONTEND_APP_HOME
 oc apply -k k8s/knative
 ----
 
-Create OpenShift route to access the frontend application
+Get the URL to access the frontend application:
+
 [source,bash]
 ----
-oc create route edge  --service=hybrid-cloud-frontend --port=8080
+oc get route -n hybrid-cloud-demo hybrid-cloud-frontend
 ----
