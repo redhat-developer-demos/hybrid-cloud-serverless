@@ -214,7 +214,7 @@ A successfull connection can be verified using the following commands, on *Cloud
 
 [source,bash]
 ----
-export SKUPPER_POD=$(SKUPPER_POD (oc get pods --selector=application=skupper-router -ojsonpath='{.items[0].metadata.name}'))
+export SKUPPER_POD=$(oc get pods --selector=application=skupper-router -ojsonpath='{.items[0].metadata.name}')
 kubectl exec -it $SKUPPER_POD -- qdmanage query --type node
 ----
 
