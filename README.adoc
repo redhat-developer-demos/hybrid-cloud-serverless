@@ -178,6 +178,7 @@ On *Cloud-1*, run the following command to create `site-token` secret:
 
 [source,bash]
 ----
+cd $HYBRID_CLOUD_HOME
 oc apply -k k8s/van
 ----
 
