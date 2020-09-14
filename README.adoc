@@ -1,5 +1,13 @@
 = Hybrid Cloud
 
+== Requirements
+
+Tested with the following versions:
+
+* OpenShift 4.5.7
+* OpenShift Serverless 4.3
+* Skupper 0.3.0
+
 == Download Sources
 
 [source,bash]
