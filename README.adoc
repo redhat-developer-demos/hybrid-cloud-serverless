@@ -7,14 +7,11 @@
 :cloud-3: aws
 :cloud-3-weight: 20
 
-[NOTE]
-====
-Tested with the following versions:
-
-* https://try.openshift.com[OpenShift]  4.5.x
-* https://www.openshift.com/learn/topics/serverless[OpenShift Serverless]
-* https://skupper.io/[Skupper] >= 0.3.0
-====
+image:https://img.shields.io/badge/OpenShift-v4.5.x-red?style=for-the-badge[link=https://try.openshift.com]
+image:https://img.shields.io/badge/OpenShift%20Serverless-v1.10-red?style=for-the-badge[link=
+https://www.openshift.com/learn/topics/serverless]
+image:https://img.shields.io/badge/skupper-v0.3.0-red?style=for-the-badge[link=
+https://skupper.io]
 
 == Download Sources
 
@@ -37,7 +34,7 @@ export FRONTEND_APP_HOME=`pwd`/hybrid-cloud-app-frontend
 
 == Prerequisites
 
-* Three https://try.openshift.com[OpenShift4] cluster with following components installed:
+* https://try.openshift.com[OpenShift4] cluster on three clouds with following components installed:
 ** https://www.openshift.com/learn/topics/serverless[OpenShift Serverless]
 
 * https://skupper.io/releases/index.html[skupper]
