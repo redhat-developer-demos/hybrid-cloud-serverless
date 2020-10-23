@@ -1,31 +1,39 @@
 = Hybrid Cloud
+:experimental:
+:cloud-1: gcp
+:cloud-1-weight: 0
+:cloud-2: azr
+:cloud-2-weight: 15
+:cloud-3: aws
+:cloud-3-weight: 20
 
-== Requirements
-
+[NOTE]
+====
 Tested with the following versions:
 
-* OpenShift 4.5.7
-* OpenShift Serverless 4.3
-* Skupper 0.3.0
+* https://try.openshift.com[OpenShift]  4.5.x
+* https://www.openshift.com/learn/topics/serverless[OpenShift Serverless]
+* https://skupper.io/[Skupper] >= 0.3.0
+====
 
 == Download Sources
 
-[source,bash]
-----
-git clone https://github.com/redhat-developer-demos/hybrid-cloud
-export HYBRID_CLOUD_HOME=`pwd`/hybrid-cloud
-git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
-export BACKEND_APP_HOME=`pwd`/hybrid-cloud-app-backend
-git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
-export FRONTEND_APP_HOME=`pwd`/hybrid-cloud-app-frontend
-----
+Lets use the following variables to refer to the source repositories  :
 
-Lets use the following variables to refer to the source repositories cloned above:
-
-- *$HYBRID_CLOUD_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud
+- *$HYBRID_CLOUD_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-serverless
 - *$BACKEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
 - *$FRONTEND_APP_HOME* -- https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
 
+
+[source,bash]
+----
+git clone https://github.com/redhat-developer-demos/hybrid-cloud-serverless
+export HYBRID_CLOUD_HOME=`pwd`/hybrid-cloud
+git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-backend
+export BACKEND_APP_HOME=`pwd`/hybrid-cloud-app-backend
+git clone https://github.com/redhat-developer-demos/hybrid-cloud-app-frontend
+export FRONTEND_APP_HOME=`pwd`/hybrid-cloud-app-frontend
+----
 
 == Prerequisites
 
@@ -36,7 +44,7 @@ Lets use the following variables to refer to the source repositories cloned abov
 
 * https://mikefarah.gitbook.io/yq/[yq]
 
-Let us call the OpenShift Clusters as *Cloud-1*, *Cloud-2* and *Cloud-3*.
+Let us call the OpenShift Clusters as *Cloud-1(`{cloud-1}`)*, *Cloud-2(`{cloud-2}`)* and *Cloud-3(`{cloud-3}`)*.
 
 The following table shows the cloud and what components gets installed on each of them:
 
@@ -44,13 +52,18 @@ The following table shows the cloud and what components gets installed on each o
 [cols="<2,^1,^1,^1", options="header"]
 |===
 | Component | Cloud-1  |  Cloud-2 | Cloud-3
-| Cloud Provider  | gcp  |  aws | azr
+| Cloud Provider  | {cloud-1}  |  {cloud-2} | {cloud-3}
 | Backend   | &#x2713;  | &#x2713;  | &#x2713;
 | Frontend  | &#x2713;  | &#x274C; | &#x274C;
 | Generate Site Token(`token.yaml`)  | &#x2713;  | &#x274C; | &#x274C;
+| Weight    | 0 | 15 | 20
 |===
 
-NOTE: You can use any cloud provider for any OpenShift4 supported cloud, the gcp/aws/azr is used in this example.
+[NOTE]
+====
+* You can use any cloud provider for any OpenShift4 supported cloud, the gcp/aws/azr is used in this example.
+* *Weight* controls how many requests that cloud can handle before skupper bursts them out to other clouds
+====
 
 Before the `backend` or `frontend` applications are deployed, execute the following on *each cloud*:
 
@@ -76,46 +89,46 @@ oc import-image hybrid-cloud-frontend --confirm --all --from quay.io/rhdeveloper
 oc set image-lookup hybrid-cloud-frontend
 ----
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
-oc apply -k k8s/skupper/gcp
+oc apply -k k8s/skupper/{cloud-1}
 ----
 
 === Cloud-2
 
 === Add Image Streams
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
 oc import-image hybrid-cloud-backend --confirm --all --from quay.io/rhdevelopers/hybrid-cloud-demo-backend
 # set local lookup policy
 oc set image-lookup hybrid-cloud-backend
 ----
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
-oc apply -k k8s/skupper/aws
+oc apply -k k8s/skupper/{cloud-2}
 ----
 
 === Cloud-3
 
 === Add Image Streams
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
 oc import-image hybrid-cloud-backend --confirm --all --from quay.io/rhdevelopers/hybrid-cloud-demo-backend
 # set local lookup policy
 oc set image-lookup hybrid-cloud-backend
 ----
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
-oc apply -k k8s/skupper/azr
+oc apply -k k8s/skupper/{cloud-3}
 ----
 
 Run the following commands on *Cloud-1*, *Cloud-2* and *Cloud-3* to wait for skupper deployments to be ready:
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
 oc rollout status deployment skupper-site-controller
 oc rollout status deployment skupper-router
@@ -128,25 +141,15 @@ On all clouds *Cloud-1*, *Cloud-2* and *Cloud-3*, run the following commands to 
 
 Deploy backend application(Knative):
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
 cd $BACKEND_APP_HOME
 oc apply -k k8s/knative
 ----
 
-[NOTE]
-====
-If you want traditional Kubenretes deployment then use the run the following command:
-[source,bash]
-----
-cd $BACKEND_APP_HOME
-oc apply -k k8s/vanilla
-----
-====
-
 Run the following command to check the status:
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
 oc get pods,svc,ksvc
 ----
@@ -175,11 +178,6 @@ NAME                                               URL                          
 service.serving.knative.dev/hybrid-cloud-backend    http://hybrid-cloud-backend.hybrid-cloud-demo.svc.cluster.local   hybrid-cloud-backend-p948k   hybrid-cloud-backend-p948k   True
 ----
 
-[NOTE]
-====
-When using the vanilla deployment you will not have `ksvc` and `service/hybrid-cloud-backend-skupper` service.
-====
-
 == Connecting Clouds
 
 On *Cloud-1*, run the following command to create `site-token` secret:
@@ -205,23 +203,23 @@ To connect *Cloud-2* and *Cloud-3* with *Cloud-1*, run the following command on 
 
 Make sure the *Cloud-2* starts to spill over after *4* requests in queue:
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
-yq w $HYBRID_CLOUD_HOME/token.yaml 'metadata.annotations[skupper.io/cost]' --tag '!!str' 4 | oc create -n hybrid-cloud-demo -f -
+yq w $HYBRID_CLOUD_HOME/token.yaml 'metadata.annotations[skupper.io/cost]' --tag '!!str' {cloud-2-weight} | oc create -n hybrid-cloud-demo -f -
 ----
 
 === Cloud-3
 
 Make sure the *Cloud-3* starts to spill over after *2* requests in queue:
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
-yq w $HYBRID_CLOUD_HOME/token.yaml 'metadata.annotations[skupper.io/cost]' --tag '!!str' 2 | oc create -n hybrid-cloud-demo -f -
+yq w $HYBRID_CLOUD_HOME/token.yaml 'metadata.annotations[skupper.io/cost]' --tag '!!str' {cloud-3-weight} | oc create -n hybrid-cloud-demo -f -
 ----
 
 A successfull connection can be verified using the following commands, on *Cloud-1*:
 
-[source,bash]
+[source,bash,subs="macros+,attributes+"]
 ----
 export SKUPPER_POD=$(oc get pods --selector=application=skupper-router -ojsonpath='{.items[0].metadata.name}')
 kubectl exec -it $SKUPPER_POD -- qdmanage query --type node
@@ -229,7 +227,7 @@ kubectl exec -it $SKUPPER_POD -- qdmanage query --type node
 
 The command should show an output as shown below:
 
-[source,json]
+[source,json,subs="macros+,attributes+"]
 ----
 [
   {
@@ -261,7 +259,7 @@ The command should show an output as shown below:
       "hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd"
     ], 
     "instance": 1599840049, 
-    "cost": 4, 
+    "cost": {cloud-2-weight}, 
     "address": "amqp:/_topo/0/hybrid-cloud-aws-skupper-router-5946d4544f-mgswf", 
     "type": "org.apache.qpid.dispatch.router.node", 
     "id": "hybrid-cloud-aws-skupper-router-5946d4544f-mgswf", 
@@ -279,7 +277,7 @@ The command should show an output as shown below:
       "hybrid-cloud-gcp-skupper-router-7b9fcf9575-knrsd"
     ], 
     "instance": 1599840051, 
-    "cost": 2, 
+    "cost": {cloud-3-weight}, 
     "address": "amqp:/_topo/0/hybrid-cloud-azr-skupper-router-675cb597fc-75g2x", 
     "type": "org.apache.qpid.dispatch.router.node", 
     "id": "hybrid-cloud-azr-skupper-router-675cb597fc-75g2x", 
@@ -358,5 +356,27 @@ Get the URL to access the frontend application:
 
 [source,bash]
 ----
-oc get route -n hybrid-cloud-demo hybrid-cloud-frontend
+export API_URL=$(oc get route -n hybrid-cloud-demo hybrid-cloud-frontend)
+----
+
+== Burst Testing
+
+It is possible to verify the brust without user input using the  following https://github.com/rakyll/hey[hey] scripts:
+
+=== Cloud-1 burst to Cloud-2
+
+In order to burst from Cloud-1 to Cloud-2, you need to send atleast `{cloud-2-weight}` requests to the API:
+
+[source,bash,subs="macros+,attributes+"]
+----
+hey -z 2s -c 20 -m POST -d '{"text": "1+2","uppercase": false,"reverse": false}' -H "Content-Type: application/json" $API_URL/api/send-request
+----
+
+=== Cloud-1 burst to Cloud-2 burst to Cloud-3
+
+In order to burst from Cloud-1 to Cloud-2, you need to send atleast `{cloud-2-weight} + {cloud-3-weight} = 35` requests to the API:
+
+[source,bash,subs="macros+,attributes+"]
+----
+hey -z 2s -c 20 -m POST -d '{"text": "1+2","uppercase": false,"reverse": false}' -H "Content-Type: application/json" $API_URL/api/send-request
 ----
