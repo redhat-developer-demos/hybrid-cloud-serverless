@@ -1,4 +1,4 @@
-ansible==2.9.10
+ansible==2.10.0
 cachetools==4.1.1
 certifi==2020.6.20
 cffi==1.14.0
