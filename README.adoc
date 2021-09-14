@@ -366,7 +366,7 @@ In order to burst from Cloud-1 to Cloud-2, you need to send atleast `{cloud-2-we
 
 [source,bash,subs="macros+,attributes+"]
 ----
-hey -z 2s -c 20 -m POST -d '{"text": "1+2","uppercase": false,"reverse": false}' -H "Content-Type: application/json" $API_URL/api/send-request
+hey -z 2s -c 20 -m POST -d '{"text": "1+2","uppercase": false,"reverse": false}' -H "Content-Type: application/json" http://$API_URL/api/send-request
 ----
 
 === Cloud-1 burst to Cloud-2 burst to Cloud-3
@@ -375,5 +375,5 @@ In order to burst from Cloud-1 to Cloud-2, you need to send atleast `{cloud-2-we
 
 [source,bash,subs="macros+,attributes+"]
 ----
-hey -z 2s -c 20 -m POST -d '{"text": "1+2","uppercase": false,"reverse": false}' -H "Content-Type: application/json" $API_URL/api/send-request
+hey -z 2s -c 20 -m POST -d '{"text": "1+2+3","uppercase": false,"reverse": false}' -H "Content-Type: application/json" http://$API_URL/api/send-request
 ----
