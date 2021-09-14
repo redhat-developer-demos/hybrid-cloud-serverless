@@ -353,7 +353,7 @@ Get the URL to access the frontend application:
 
 [source,bash]
 ----
-export API_URL=$(oc get route -n hybrid-cloud-demo hybrid-cloud-frontend -ojsonpath='{spec.host}')
+export API_URL=$(oc get route -n hybrid-cloud-demo hybrid-cloud-frontend -ojsonpath='{.spec.host}')
 ----
 
 == Burst Testing
